@@ -44,8 +44,10 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: |
+            type=gha
+            type=registry,ref=${{ env.ALIYUN_REGISTRY }}/${{ env.ALIYUN_IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.ALIYUN_REGISTRY }}/${{ env.ALIYUN_IMAGE_NAME }}:buildcache,mode=max
 
   deploy:
     needs: build-and-push
@@ -71,8 +73,22 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # 配置 Docker 镜像加速器
+            sudo mkdir -p /etc/docker
+            sudo tee /etc/docker/daemon.json <<-'EOF'
+            {
+              "registry-mirrors": [
+                "https://registry.cn-hangzhou.aliyuncs.com",
+                "https://mirror.ccs.tencentyun.com",
+                "https://hub-mirror.c.163.com"
+              ]
+            }
+            EOF
+            sudo systemctl daemon-reload
+            sudo systemctl restart docker
+            
             cd /data/050819521/webroot/imagica2
-            docker login --username ${{ secrets.ALIYUN_USERNAME }} --password ${{ secrets.ALIYUN_PASSWORD }} ${{ env.ALIYUN_REGISTRY }}
+            docker login --username ${{ secrets.ALIYUN_USERNAME }} --password-stdin ${{ env.ALIYUN_REGISTRY }} <<< "${{ secrets.ALIYUN_PASSWORD }}"
             docker-compose down
             docker-compose pull
             docker-compose up -d

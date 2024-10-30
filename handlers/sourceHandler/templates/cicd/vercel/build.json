@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "{{outputDirectory}}/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/{{userId}}/{{projectId}}/(.*)",
+      "dest": "/{{outputDirectory}}/$1"
+    },
+    {
+      "src": "/{{userId}}/{{projectId}}",
+      "dest": "/{{outputDirectory}}/index.html"
+    }
+  ],
+  "env": {
+    "USER_ID": "{{userId}}",
+    "PROJECT_ID": "{{projectId}}"
+  },
+  "github": {
+    "enabled": false
+  }
+}

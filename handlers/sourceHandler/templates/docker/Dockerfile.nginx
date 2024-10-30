@@ -1,0 +1,26 @@
+# 使用官方 Nginx 镜像作为基础镜像
+FROM nginx:alpine
+
+# 添加标签信息
+LABEL maintainer="{{maintainer}}"
+LABEL project="{{projectName}}"
+LABEL user="{{userId}}"
+
+# 创建应用目录
+RUN mkdir -p /usr/share/nginx/html/{{userId}}/{{projectId}}
+
+# 将构建产物复制到对应用户的项目目录
+COPY ./dist /usr/share/nginx/html/{{userId}}/{{projectId}}
+
+# 复制自定义的 Nginx 配置
+COPY ./nginx.conf /etc/nginx/conf.d/{{userId}}_{{projectId}}.conf
+
+# 暴露固定端口 80
+EXPOSE 80
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=3s \
+    CMD curl -f http://localhost:80/{{userId}}/{{projectId}}/health || exit 1
+
+# 启动 Nginx
+CMD ["nginx", "-g", "daemon off;"]

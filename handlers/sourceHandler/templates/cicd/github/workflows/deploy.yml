@@ -1,0 +1,39 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${nodeVersion}
+        
+    - name: Install Dependencies
+      run: npm install
+      
+    - name: Build
+      run: npm run build
+      
+    - name: Build Docker Image
+      run: |
+        docker build -t ${dockerImage}:${{ github.sha }} .
+        docker push ${dockerImage}:${{ github.sha }}
+      
+    - name: Deploy
+      run: |
+        curl -X POST ${deployUrl} \
+          -H "Content-Type: application/json" \
+          -d '{
+            "image": "${dockerImage}:${{ github.sha }}",
+            "env": "${deployEnv}"
+          }'

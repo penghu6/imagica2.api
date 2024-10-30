@@ -1,0 +1,17 @@
+{
+  "projectId": "{{projectId}}",
+  "orgId": "{{orgId}}",
+  "settings": {
+    "framework": "{{framework}}",
+    "buildCommand": "{{buildCommand}}",
+    "outputDirectory": "{{outputDirectory}}",
+    "devCommand": "{{devCommand}}",
+    "installCommand": "{{installCommand}}"
+  },
+  "env": {
+    "VERCEL_USER_ID": "{{userId}}",
+    "VERCEL_PROJECT_ID": "{{projectId}}"
+  },
+  "public": false,
+  "regions": ["{{region}}"]
+}

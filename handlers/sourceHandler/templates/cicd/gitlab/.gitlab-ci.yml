@@ -1,0 +1,45 @@
+stages:
+  - install
+  - build
+  - docker
+  - deploy
+
+variables:
+  NODE_VERSION: "${nodeVersion}"
+  DOCKER_IMAGE: "${dockerImage}"
+  DEPLOY_ENV: "${deployEnv}"
+
+install:
+  stage: install
+  image: node:${NODE_VERSION}
+  script:
+    - npm install
+  cache:
+    paths:
+      - node_modules/
+
+build:
+  stage: build
+  image: node:${NODE_VERSION}
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+
+docker:
+  stage: docker
+  script:
+    - docker build -t ${DOCKER_IMAGE}:${CI_COMMIT_SHA} .
+    - docker push ${DOCKER_IMAGE}:${CI_COMMIT_SHA}
+
+deploy:
+  stage: deploy
+  script:
+    - |
+      curl -X POST ${deployUrl} \
+        -H "Content-Type: application/json" \
+        -d "{
+          \"image\": \"${DOCKER_IMAGE}:${CI_COMMIT_SHA}\",
+          \"env\": \"${DEPLOY_ENV}\"
+        }"

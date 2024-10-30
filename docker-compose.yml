@@ -2,11 +2,12 @@ version: '3.8'
 
 services:
   api:
-    image: ghcr.io/your-username/imagica2.api:latest
+    image: ghcr.io/penghu6/imagica2.api:develop  # 修改为你的仓库地址，使用 develop 分支标签
     restart: always
     ports:
       - "3000:3000"
     volumes:
       - /bucket:/bucket
       - /storage:/storage
-      - /opt/imagica2/.env:/.env
+      - /data/050819521/webroot/imagica2/.env:/.env
+    working_dir: /app

@@ -31,45 +31,13 @@ jobs:
           username: ${{ secrets.ALIYUN_USERNAME }}
           password: ${{ secrets.ALIYUN_PASSWORD }}
 
-      - name: Generate version
-        id: version
-        run: |
-          # 读取当前版本号，如果文件不存在则从 0.1 开始
-          if [ -f .version ]; then
-            current_version=$(cat .version)
-          else
-            current_version="0.1"
-          fi
-          
-          # 分割主版本号和次版本号
-          major_version=$(echo $current_version | cut -d. -f1)
-          minor_version=$(echo $current_version | cut -d. -f2)
-          
-          # 增加次版本号
-          new_minor_version=$((minor_version + 1))
-          new_version="$major_version.$new_minor_version"
-          
-          # 保存新版本号
-          echo $new_version > .version
-          
-          # 设置输出变量
-          echo "version=$new_version" >> $GITHUB_OUTPUT
-          echo "Generated version: $new_version"
-          
-          # 提交新版本号回仓库
-          git config --global user.name 'GitHub Actions'
-          git config --global user.email 'actions@github.com'
-          git add .version
-          git commit -m "chore: bump version to $new_version [skip ci]"
-          git push
-
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.ALIYUN_REGISTRY }}/${{ env.ALIYUN_IMAGE_NAME }}
           tags: |
-            type=raw,value=v${{ steps.version.outputs.version }}
+            type=raw,value=develop
             type=raw,value=latest
 
       - name: Build and push Docker image
@@ -131,9 +99,7 @@ jobs:
             
             cd /data/050819521/webroot/imagica2
             
-            # 替换 docker-compose.yml 中的镜像版本
-            sed -i 's/:latest/:v${{ steps.version.outputs.version }}/g' docker-compose.yml
-            
+            # 使用 latest 标签，因为我们已经在构建时推送了 latest
             echo "${{ secrets.ALIYUN_PASSWORD }}" | docker login --username ${{ secrets.ALIYUN_USERNAME }} --password-stdin ${{ env.ALIYUN_REGISTRY }}
             docker-compose down
             docker-compose pull

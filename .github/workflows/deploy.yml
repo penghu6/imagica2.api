@@ -36,6 +36,11 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.ALIYUN_REGISTRY }}/${{ env.ALIYUN_IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,format=long
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -48,6 +53,20 @@ jobs:
             type=gha
             type=registry,ref=${{ env.ALIYUN_REGISTRY }}/${{ env.ALIYUN_IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.ALIYUN_REGISTRY }}/${{ env.ALIYUN_IMAGE_NAME }}:buildcache,mode=max
+          # 添加构建参数以便调试
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+
+      - name: Debug Image Push
+        if: always()
+        run: |
+          echo "Registry: ${{ env.ALIYUN_REGISTRY }}"
+          echo "Image Name: ${{ env.ALIYUN_IMAGE_NAME }}"
+          echo "Generated Tags: ${{ steps.meta.outputs.tags }}"
+          docker images
+          # 尝试手动推送
+          docker tag $(docker images -q | head -n 1) ${{ env.ALIYUN_REGISTRY }}/${{ env.ALIYUN_IMAGE_NAME }}:manual-latest
+          docker push ${{ env.ALIYUN_REGISTRY }}/${{ env.ALIYUN_IMAGE_NAME }}:manual-latest
 
   deploy:
     needs: build-and-push

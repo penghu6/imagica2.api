@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   api:
-    image: ghcr.io/penghu6/imagica2.api:develop
+    image: registry.cn-hangzhou.aliyuncs.com/seolove/imagica2:latest
     restart: always
     ports:
       - "3000:3000"

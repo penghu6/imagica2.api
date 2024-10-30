@@ -31,16 +31,46 @@ jobs:
           username: ${{ secrets.ALIYUN_USERNAME }}
           password: ${{ secrets.ALIYUN_PASSWORD }}
 
+      - name: Generate version
+        id: version
+        run: |
+          # 读取当前版本号，如果文件不存在则从 0.1 开始
+          if [ -f .version ]; then
+            current_version=$(cat .version)
+          else
+            current_version="0.1"
+          fi
+          
+          # 分割主版本号和次版本号
+          major_version=$(echo $current_version | cut -d. -f1)
+          minor_version=$(echo $current_version | cut -d. -f2)
+          
+          # 增加次版本号
+          new_minor_version=$((minor_version + 1))
+          new_version="$major_version.$new_minor_version"
+          
+          # 保存新版本号
+          echo $new_version > .version
+          
+          # 设置输出变量
+          echo "version=$new_version" >> $GITHUB_OUTPUT
+          echo "Generated version: $new_version"
+          
+          # 提交新版本号回仓库
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git add .version
+          git commit -m "chore: bump version to $new_version [skip ci]"
+          git push
+
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.ALIYUN_REGISTRY }}/${{ env.ALIYUN_IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha,format=long
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=v${{ steps.version.outputs.version }}
+            type=raw,value=latest
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -49,24 +79,17 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: |
-            type=gha
-            type=registry,ref=${{ env.ALIYUN_REGISTRY }}/${{ env.ALIYUN_IMAGE_NAME }}:buildcache
-          cache-to: type=registry,ref=${{ env.ALIYUN_REGISTRY }}/${{ env.ALIYUN_IMAGE_NAME }}:buildcache,mode=max
-          # 添加构建参数以便调试
-          build-args: |
-            BUILDKIT_INLINE_CACHE=1
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Debug Image Push
         if: always()
         run: |
           echo "Registry: ${{ env.ALIYUN_REGISTRY }}"
           echo "Image Name: ${{ env.ALIYUN_IMAGE_NAME }}"
+          echo "Version: ${{ steps.version.outputs.version }}"
           echo "Generated Tags: ${{ steps.meta.outputs.tags }}"
           docker images
-          # 尝试手动推送
-          docker tag $(docker images -q | head -n 1) ${{ env.ALIYUN_REGISTRY }}/${{ env.ALIYUN_IMAGE_NAME }}:manual-latest
-          docker push ${{ env.ALIYUN_REGISTRY }}/${{ env.ALIYUN_IMAGE_NAME }}:manual-latest
 
   deploy:
     needs: build-and-push
@@ -107,6 +130,10 @@ jobs:
             sudo systemctl restart docker
             
             cd /data/050819521/webroot/imagica2
+            
+            # 替换 docker-compose.yml 中的镜像版本
+            sed -i 's/:latest/:v${{ steps.version.outputs.version }}/g' docker-compose.yml
+            
             echo "${{ secrets.ALIYUN_PASSWORD }}" | docker login --username ${{ secrets.ALIYUN_USERNAME }} --password-stdin ${{ env.ALIYUN_REGISTRY }}
             docker-compose down
             docker-compose pull

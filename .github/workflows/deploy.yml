@@ -78,9 +78,9 @@ jobs:
             sudo tee /etc/docker/daemon.json <<-'EOF'
             {
               "registry-mirrors": [
+                "https://7gl090il.mirror.aliyuncs.com",
                 "https://registry.cn-hangzhou.aliyuncs.com",
-                "https://mirror.ccs.tencentyun.com",
-                "https://hub-mirror.c.163.com"
+                "https://mirror.ccs.tencentyun.com"
               ]
             }
             EOF
@@ -88,7 +88,7 @@ jobs:
             sudo systemctl restart docker
             
             cd /data/050819521/webroot/imagica2
-            docker login --username ${{ secrets.ALIYUN_USERNAME }} --password-stdin ${{ env.ALIYUN_REGISTRY }} <<< "${{ secrets.ALIYUN_PASSWORD }}"
+            echo "${{ secrets.ALIYUN_PASSWORD }}" | docker login --username ${{ secrets.ALIYUN_USERNAME }} --password-stdin ${{ env.ALIYUN_REGISTRY }}
             docker-compose down
             docker-compose pull
             docker-compose up -d

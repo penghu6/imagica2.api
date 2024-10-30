@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  api:
+    image: ghcr.io/your-username/imagica2.api:latest
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - /bucket:/bucket
+      - /storage:/storage
+      - /opt/imagica2/.env:/.env

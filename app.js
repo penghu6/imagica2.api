@@ -27,16 +27,18 @@ const deploymentRouter = require("./routes/deploymentController");
 // 创建服务器实例
 const app = express();
 
-// 简化的 CORS 配置，允许所有域名
-const corsOptions = {
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-version'],
-  maxAge: 86400
-};
-
-// 使用 CORS 中间件
-app.use(cors(corsOptions));
+// 添加跨域中间件
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-version');
+  
+  // 处理 OPTIONS 请求
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 app.use(logger("dev"));
 app.use(express.json());
@@ -47,8 +49,6 @@ app.use(express.static(path.join(__dirname, "public")));
 // 使用路由中间件
 app.use("/api/upload", uploadRouter);
 app.use("/api/source-upload", sourceUploadRouter);
-
-// 新增的路由中间件
 app.use("/api/user", userRouter);
 app.use("/api/project", projectRouter);
 app.use("/api/build", buildRouter);

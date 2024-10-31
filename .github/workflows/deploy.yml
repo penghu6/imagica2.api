@@ -92,7 +92,7 @@ jobs:
             sudo chmod -R 755 /data/050819521/file/imagica2/storage
             
             cd /data/050819521/
-            echo "${{ secrets.ALIYUN_PASSWORD }}" | docker login --username ${{ secrets.ALIYUN_USERNAME }} --password-stdin ${{ env.ALIYUN_REGISTRY }}
             docker-compose down
+            echo "${{ secrets.ALIYUN_PASSWORD }}" | docker login --username ${{ secrets.ALIYUN_USERNAME }} --password-stdin ${{ env.ALIYUN_REGISTRY }}
             docker-compose pull
             docker-compose up -d

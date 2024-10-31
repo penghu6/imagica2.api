@@ -17,5 +17,9 @@ services:
         mkdir -p /bucket/temp &&
         chown -R node:node /bucket &&
         chown -R node:node /storage &&
-        node app.js
+        ls -la /app &&
+        pwd &&
+        node -v &&
+        npm list &&
+        node bin/www
       "

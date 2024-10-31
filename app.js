@@ -4,6 +4,7 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
 const session = require("express-session");
+const cors = require('cors');
 const { ServiceError, UnknownError } = require("./utils/errors");
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
@@ -26,14 +27,16 @@ const deploymentRouter = require("./routes/deploymentController");
 // 创建服务器实例
 const app = express();
 
-// 使用 session 中间件
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: true,
-    saveUninitialized: true,
-  })
-);
+// 简化的 CORS 配置，允许所有域名
+const corsOptions = {
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-version'],
+  maxAge: 86400
+};
+
+// 使用 CORS 中间件
+app.use(cors(corsOptions));
 
 app.use(logger("dev"));
 app.use(express.json());

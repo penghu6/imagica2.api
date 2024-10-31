@@ -11,15 +11,3 @@ services:
       - /data/050819521/file/imagica2/storage:/storage
       - /data/050819521/imagica2Config/.env:/.env
     working_dir: /app
-    user: "1000:1000"
-    command: >
-      sh -c "
-        mkdir -p /bucket/temp &&
-        chown -R node:node /bucket &&
-        chown -R node:node /storage &&
-        ls -la /app &&
-        pwd &&
-        node -v &&
-        npm list &&
-        node bin/www
-      "

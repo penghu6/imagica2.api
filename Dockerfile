@@ -17,7 +17,7 @@ COPY . .
 RUN mkdir -p /bucket /bucket/temp /storage /storage/temp
 
 # 设置目录权限
-RUN chown -R node:node /bucket /storage
+RUN chown -R node:node /bucket
 
 # 切换到非 root 用户
 USER node

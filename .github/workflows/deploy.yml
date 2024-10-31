@@ -83,23 +83,15 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # 配置 Docker 镜像加速器
-            sudo mkdir -p /etc/docker
-            sudo tee /etc/docker/daemon.json <<-'EOF'
-            {
-              "registry-mirrors": [
-                "https://7gl090il.mirror.aliyuncs.com",
-                "https://registry.cn-hangzhou.aliyuncs.com",
-                "https://mirror.ccs.tencentyun.com"
-              ]
-            }
-            EOF
-            sudo systemctl daemon-reload
-            sudo systemctl restart docker
+            # 创建必要的目录并设置权限
+            sudo mkdir -p /data/050819521/file/imagica2/bucket/temp
+            sudo mkdir -p /data/050819521/file/imagica2/storage
+            sudo chown -R 1000:1000 /data/050819521/file/imagica2/bucket
+            sudo chown -R 1000:1000 /data/050819521/file/imagica2/storage
+            sudo chmod -R 755 /data/050819521/file/imagica2/bucket
+            sudo chmod -R 755 /data/050819521/file/imagica2/storage
             
             cd /data/050819521/webroot/imagica2
-            
-            # 使用 latest 标签，因为我们已经在构建时推送了 latest
             echo "${{ secrets.ALIYUN_PASSWORD }}" | docker login --username ${{ secrets.ALIYUN_USERNAME }} --password-stdin ${{ env.ALIYUN_REGISTRY }}
             docker-compose down
             docker-compose pull

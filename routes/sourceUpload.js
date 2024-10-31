@@ -123,12 +123,8 @@ router.post("/zip/:userId/:projectId", async function (req, res, next) {
  */
 router.post("/file/:userId/:projectId", async function (req, res, next) {
   console.log('处理文件上传请求');
-  console.log('请求头:', req.headers);
-  console.log('请求体字段:', Object.keys(req.body || {}));
-  console.log('文件字段:', req.files);
   
   upload(req, res, async function (err) {
-    console.log('Multer 处理完成', err ? `出错: ${err.message}` : '成功');
     try {
       if (err instanceof multer.MulterError) {
         throw new Error('上传文件失败：' + err.message);
@@ -137,35 +133,28 @@ router.post("/file/:userId/:projectId", async function (req, res, next) {
       }
 
       const { userId, projectId } = req.params;
-      const version = req.headers['x-version'] || '1.0.0';
-
+      const timestamp = Date.now();  // 使用时间戳作为版本标识
+      
       // 构建存储路径
       const projectRoot = path.join(bucket.root, userId, projectId);
-      const versionPath = path.join(projectRoot, 'source', version);
+      const versionPath = path.join(projectRoot, 'source', 'latest');  // 固定使用 latest
       const zipPath = path.join(versionPath, 'source.zip');
-      const extractPath = path.join(versionPath, 'code'); // 解压目标目录
+      const extractPath = path.join(versionPath, 'code');
 
       try {
         // 确保目录存在
         await fs.mkdir(versionPath, { recursive: true });
         await fs.mkdir(extractPath, { recursive: true });
 
-        // 检查并清理已存在的文件
-        const exists = await fs.access(zipPath)
-          .then(() => true)
-          .catch(() => false);
-
-        if (exists) {
+        // 清理已存在的文件
+        await fs.rm(extractPath, { recursive: true, force: true });
+        await fs.mkdir(extractPath);
+        
+        if (await fs.access(zipPath).then(() => true).catch(() => false)) {
           await fs.unlink(zipPath);
         }
 
-        // 清理已存在的解压目录
-        if (exists) {
-          await fs.rm(extractPath, { recursive: true, force: true });
-          await fs.mkdir(extractPath);
-        }
-
-        // 移动上传的zip文件到目标位置
+        // 移动上传的zip文件
         await fs.rename(req.file.path, zipPath);
         const stats = await fs.stat(zipPath);
 
@@ -199,82 +188,47 @@ router.post("/file/:userId/:projectId", async function (req, res, next) {
 
         // 更新 source-info.json
         const sourceInfoPath = path.join(projectRoot, 'source-info.json');
-        let sourceInfo = {};
-        
-        try {
-          const existingInfo = await fs.readFile(sourceInfoPath, 'utf8');
-          sourceInfo = JSON.parse(existingInfo);
-        } catch (error) {
-          // 文件不存在或解析失败，使用空对象
-        }
-
-        // 构建存储信息
-        const storagePath = path.join(userId, projectId, 'source', version).replace(/\\/g, '/');
-        
-        // 更新版本信息
-        sourceInfo[version] = {
+        let sourceInfo = {
           lastUpdated: new Date().toISOString(),
+          timestamp: timestamp,
           source: {
             filename: 'source.zip',
             size: stats.size,
             lastModified: stats.mtime.toISOString(),
-            relativePath: path.join('source', version, 'source.zip').replace(/\\/g, '/'),
-            storagePath: storagePath,
+            relativePath: 'source/latest/source.zip',
+            storagePath: path.join(userId, projectId, 'source', 'latest').replace(/\\/g, '/'),
             mimeType: req.file.mimetype
           },
           extractedFiles: extractedFiles
         };
 
-        // 保存 source-info.json
         await fs.writeFile(sourceInfoPath, JSON.stringify(sourceInfo, null, 2));
 
-        // 构建相对路径
-        const getRelativePath = (fullPath) => {
-          return path.relative(bucket.root, fullPath).replace(/\\/g, '/');
-        };
-
-        // 在返回响应之前添加部署链接
-        const deployDomain = 'brain.seolove.cn'; // 配置部署域名
-
+        // 返回简化的响应
         res.send({
           code: 0,
-          msg: exists ? "源代码已更新" : "源代码上传成功",
+          msg: "源代码已更新",
           data: {
-            version,
-            updated: exists,
-            source: sourceInfo[version].source,
-            extractedFiles: extractedFiles,
-            paths: {
-              relativePath: getRelativePath(versionPath),
-              zipFile: getRelativePath(zipPath),
-              extractPath: getRelativePath(extractPath),
-              sourceInfo: getRelativePath(sourceInfoPath)
-            },
-            deployUrls: {
-              default: `http://${deployDomain}/projects/${userId}/${projectId}/`,
-              versioned: `http://${deployDomain}/projects/${userId}/${projectId}/v/${version}/`
-            }
+            accessUrl: `http://brain.seolove.cn/projects/${userId}/${projectId}/`,
+            lastUpdated: sourceInfo.lastUpdated,
+            fileCount: extractedFiles.length
           }
         });
 
       } catch (error) {
         // 清理文件
         try {
-          // 清理 zip 文件
-          await fs.access(zipPath);
-          await fs.unlink(zipPath);
-          
-          // 清理解压目录
-          await fs.access(extractPath);
           await fs.rm(extractPath, { recursive: true, force: true });
+          if (await fs.access(zipPath).then(() => true).catch(() => false)) {
+            await fs.unlink(zipPath);
+          }
         } catch (e) {
-          // 忽略文件不存在的错误
+          // 忽略清理错误
         }
         throw error;
       }
 
     } catch (error) {
-      // 清理临时文件
       if (req.file && req.file.path) {
         try {
           await fs.unlink(req.file.path);

@@ -233,6 +233,9 @@ router.post("/file/:userId/:projectId", async function (req, res, next) {
           return path.relative(bucket.root, fullPath).replace(/\\/g, '/');
         };
 
+        // 在返回响应之前添加部署链接
+        const deployDomain = 'brain.seolove.cn'; // 配置部署域名
+
         res.send({
           code: 0,
           msg: exists ? "源代码已更新" : "源代码上传成功",
@@ -246,6 +249,10 @@ router.post("/file/:userId/:projectId", async function (req, res, next) {
               zipFile: getRelativePath(zipPath),
               extractPath: getRelativePath(extractPath),
               sourceInfo: getRelativePath(sourceInfoPath)
+            },
+            deployUrls: {
+              default: `http://${deployDomain}/projects/${userId}/${projectId}/`,
+              versioned: `http://${deployDomain}/projects/${userId}/${projectId}/v/${version}/`
             }
           }
         });

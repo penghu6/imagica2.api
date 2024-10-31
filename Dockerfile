@@ -13,11 +13,11 @@ RUN npm ci --only=production
 # 复制源代码
 COPY . .
 
-# 创建 imagica2 目录及其子目录
+# 创建 imagica2 目录及其子目录，并设置权限
 RUN mkdir -p /app/imagica2/storage/temp \
     && mkdir -p /app/imagica2/bucket/temp \
     && chown -R node:node /app/imagica2 \
-    && chmod -R 755 /app/imagica2
+    && chmod -R 777 /app/imagica2
 
 # 切换到非 root 用户
 USER node

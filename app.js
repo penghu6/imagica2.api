@@ -27,13 +27,20 @@ const deploymentRouter = require("./routes/deploymentController");
 // 创建服务器实例
 const app = express();
 
-// 使用 cors 中间件，简化跨域配置
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'x-version'],
-  credentials: true
-}));
+// 修改 CORS 配置
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-version');
+  res.header('Access-Control-Max-Age', '86400'); // 24 hours
+  
+  // 处理 OPTIONS 请求
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(204);
+    return;
+  }
+  next();
+});
 
 app.use(logger("dev"));
 app.use(express.json());

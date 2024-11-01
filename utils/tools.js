@@ -4,6 +4,7 @@ const fs = require("fs");
 const multer = require("multer");
 const path = require("path");
 const { UnknownError } = require("./errors");
+const dns = require('dns'); // 引入dns模块
 
 // 格式化要响应的数据
 module.exports.formatResponse = function (code, msg, data) {
@@ -80,3 +81,21 @@ module.exports.uploading = multer({
     files: 1,
   },
 });
+
+/**
+ * 验证指定的域名是否解析到目标地址
+ * @param {string} domain 要检查的域名
+ * @param {string} target 目标地址
+ * @returns {Promise<boolean>} 解析是否正确
+ */
+module.exports.checkDomainResolution = function(domain, target) {
+  return new Promise((resolve, reject) => {
+    dns.resolveCname(domain, (err, addresses) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(addresses.includes(target));
+    });
+  });
+};

@@ -9,6 +9,7 @@ const { ServiceError, UnknownError } = require("./utils/errors");
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
 
+
 // 默认读取项目根目录下的 .env 环境变量文件
 require("dotenv").config();
 // 进行数据库初始化
@@ -23,6 +24,7 @@ const userRouter = require("./routes/userController");
 const projectRouter = require("./routes/projectController");
 const buildRouter = require("./routes/buildController");
 const deploymentRouter = require("./routes/deploymentController");
+const domainVerificationRouter = require('./routes/DomainVerificationController');
 
 // 创建服务器实例
 const app = express();
@@ -40,6 +42,7 @@ app.use("/api/user", userRouter);
 app.use("/api/project", projectRouter);
 app.use("/api/build", buildRouter);
 app.use("/api/deployment", deploymentRouter);
+app.use('/api/domain-verification', domainVerificationRouter);
 
 // 配置 Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

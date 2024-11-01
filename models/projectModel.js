@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const path = require('path');
 
 /**
  * 项目模型
@@ -111,6 +112,55 @@ const projectSchema = new mongoose.Schema({
     autoDeploy: { type: Boolean, default: true },  // 自动部署
     buildNotification: { type: Boolean, default: true }, // 构建通知
     maintenance: { type: Boolean, default: false }  // 维护模式
+  },
+  showCodeEditor: {
+    type: Boolean,
+    default: false, // 是否显示代码编辑器
+  },
+  showUploadModal: {
+    type: Boolean,
+    default: false, // 是否显示上传模态框
+  },
+  uploadUrl: {
+    type: String,
+    default: '', // 上传的URL
+  },
+  isPublishing: {
+    type: Boolean,
+    default: false, // 是否正在发布
+  },
+  isAITyping: {
+    type: Boolean,
+    default: false, // AI是否正在输入
+  },
+  publishSettings: {
+    customDomain: {
+      type: String,
+      default: '', // 发布设置中的自定义域名
+    }
+  },
+  showPublishSettings: {
+    type: Boolean,
+    default: false, // 是否显示发布设置
+  },
+  // 新增字段：项目开发目录路径
+  developmentDirectory: {
+    type: String,
+    required: true,
+    default: function() {
+      return path.join('users', this.owner.toString(), 'projects', this._id.toString(), 'development');
+    }
+  },
+  // 项目标签
+  tags: [{
+    type: String,
+    trim: true
+  }],
+  // 项目优先级
+  priority: {
+    type: String,
+    enum: ['high', 'medium', 'low'],
+    default: 'medium'
   }
 }, {
   timestamps: true,

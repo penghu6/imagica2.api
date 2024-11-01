@@ -138,13 +138,13 @@ router.post("/file/:userId/:projectId", async function (req, res, next) {
 
       // 构建存储路径 - 使用 latest
       const projectRoot = path.join(bucket.root, userId, projectId);
-      const latestPath = path.join(projectRoot, 'source', 'latest');
-      const latestZipPath = path.join(latestPath, 'source.zip');
+      const latestPath = path.join(projectRoot, 'releases', 'latest');
+      const latestZipPath = path.join(latestPath, 'releases.zip');
       const latestExtractPath = path.join(latestPath, 'code');
 
       // 同时构建版本路径用于返回（保持原有结构）
-      const versionPath = path.join(projectRoot, 'source', version);
-      const zipPath = path.join(versionPath, 'source.zip');
+      const versionPath = path.join(projectRoot, 'releases', version);
+      const zipPath = path.join(versionPath, 'releases.zip');
       const extractPath = path.join(versionPath, 'code');
 
       try {
@@ -207,15 +207,15 @@ router.post("/file/:userId/:projectId", async function (req, res, next) {
           // 文件不存在时使用空对象
         }
 
-        // 更新版本信息（使用原有路径结构）
+        // 更新版本信息（用原有路径结构）
         sourceInfo[version] = {
           lastUpdated: new Date().toISOString(),
-          source: {
-            filename: 'source.zip',
+          releases: {
+            filename: 'releases.zip',
             size: stats.size,
             lastModified: stats.mtime.toISOString(),
-            relativePath: path.join('source', version, 'source.zip').replace(/\\/g, '/'),
-            storagePath: path.join(userId, projectId, 'source', version).replace(/\\/g, '/'),
+            relativePath: path.join('releases', version, 'releases.zip').replace(/\\/g, '/'),
+            storagePath: path.join(userId, projectId, 'releases', version).replace(/\\/g, '/'),
             mimeType: req.file.mimetype
           },
           extractedFiles: extractedFiles
@@ -304,7 +304,7 @@ router.get("/snapshot/:userId/:projectId/:version", async function (req, res) {
     const { userId, projectId, version } = req.params;
     
     // 构建源代码目录路径
-    const codePath = path.join(bucket.root, userId, projectId, 'source', version, 'code');
+    const codePath = path.join(bucket.root, userId, projectId, 'releases', version, 'code');
     
     // 设置响应头
     res.setHeader('Content-Type', 'application/octet-stream');

@@ -28,6 +28,7 @@ class UserService {
     }
     return user;
   }
+  
 
   /**
    * 更新用户信息
@@ -46,6 +47,14 @@ class UserService {
    */
   async deleteUser(userId) {
     return userDao.deleteUser(userId);
+  }
+
+  /**
+   * 获取所有用户
+   * @returns {Promise<Array>} 用户列表
+   */
+  async findAllUsersService() {
+    return await userDao.findAllUsers();
   }
 }
 

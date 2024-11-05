@@ -47,6 +47,14 @@ class UserDao {
   async deleteUser(userId) {
     return UserModel.findByIdAndDelete(userId);
   }
+
+  /**
+   * 查询所有用户
+   * @returns {Promise<Array>} 用户列表
+   */
+  async findAllUsers() {
+    return UserModel.find();
+  }
 }
 
 module.exports = new UserDao(); 

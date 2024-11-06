@@ -20,9 +20,13 @@ const chatHistoryService = require('../services/chatHistoryService');
  *       200:
  *         description: 成功获取聊天记录
  */
-router.get("/:projectId", async function (req, res) {
-  const result = await chatHistoryService.getMessages(req.params.projectId);
-  res.send(formatResponse(0, "", result));
+router.get("/:projectId", async function (req, res, next) {
+  try {
+    const result = await chatHistoryService.getMessages(req.params.projectId);
+    res.send(formatResponse(0, "", result));
+  } catch (error) {
+    next(error);
+  }
 });
 
 /**
@@ -59,9 +63,13 @@ router.get("/:projectId", async function (req, res) {
  *       200:
  *         description: 聊天记录保存成功
  */
-router.post("/:projectId", async function (req, res) {
-  const result = await chatHistoryService.saveMessages(req.params.projectId, req.body.messages);
-  res.send(formatResponse(0, "聊天记录保存成功", result));
+router.post("/:projectId", async function (req, res, next) {
+  try {
+    const result = await chatHistoryService.saveMessages(req.params.projectId, req.body.messages);
+    res.send(formatResponse(0, "聊天记录保存成功", result));
+  } catch (error) {
+    next(error);
+  }
 });
 
 /**
@@ -81,9 +89,13 @@ router.post("/:projectId", async function (req, res) {
  *       200:
  *         description: 聊天记录删除成功
  */
-router.delete("/:projectId", async function (req, res) {
-  const result = await chatHistoryService.deleteMessages(req.params.projectId);
-  res.send(formatResponse(0, "聊天记录删除成功", result));
+router.delete("/:projectId", async function (req, res, next) {
+  try {
+    const result = await chatHistoryService.deleteMessages(req.params.projectId);
+    res.send(formatResponse(0, "聊天记录删除成功", result));
+  } catch (error) {
+    next(error);
+  }
 });
 
 module.exports = router;

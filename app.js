@@ -6,6 +6,7 @@ const logger = require("morgan");
 const session = require("express-session");
 const cors = require('cors');
 const { ServiceError, UnknownError } = require("./utils/errors");
+const { formatResponse } = require("./utils/tools");
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
 
@@ -61,12 +62,25 @@ app.use(function (req, res, next) {
 // 修改错误处理中间件
 app.use(function (err, req, res, next) {
   console.error('Error:', err);
-  if (err instanceof ServiceError) {
-    res.status(err.status || 500).send(err.toResponseJSON());
-  } else {
-    const unknownError = new UnknownError();
-    res.status(500).send(unknownError.toResponseJSON());
+
+  // 处理 MongoDB 错误
+  if (err.name === 'MongoError' || err.name === 'ValidationError') {
+    return res.status(400).send(formatResponse(1, err.message, null));
   }
+
+  // 处理自定义业务错误
+  if (err instanceof ServiceError) {
+    return res.status(err.status || 500).send(err.toResponseJSON());
+  }
+
+  // 处理异步错误
+  if (err instanceof Error) {
+    return res.status(500).send(formatResponse(1, err.message, null));
+  }
+
+  // 处理其他未知错误
+  const unknownError = new UnknownError();
+  res.status(500).send(unknownError.toResponseJSON());
 });
 
 // 启动服务器

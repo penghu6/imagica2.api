@@ -7,21 +7,17 @@ class ProjectService {
    * @param {Object} projectData - 项目数据
    */
   async createProject(projectData) {
-    try {
-      const { chatMessages, ...projectInfo } = projectData;
+    const { chatMessages, ...projectInfo } = projectData;
 
-      // 1. 创建项目
-      const project = await projectDao.createProject(projectInfo);
+    // 1. 创建项目
+    const project = await projectDao.createProject(projectInfo);
 
-      // 2. 保存聊天记录
-      if (chatMessages && chatMessages.length > 0) {
-        await chatHistoryDao.saveMessages(project._id, chatMessages);
-      }
-
-      return project;
-    } catch (error) {
-      throw new Error(`创建项目失败: ${error.message}`);
+    // 2. 保存聊天记录
+    if (chatMessages && chatMessages.length > 0) {
+      await chatHistoryDao.saveMessages(project._id, chatMessages);
     }
+
+    return project;
   }
 
   /**
@@ -40,21 +36,17 @@ class ProjectService {
    * @returns {Promise<Object>} 更新后的项目对象
    */
   async updateProject(projectId, updateData) {
-    try {
-      const { chatMessages, ...projectInfo } = updateData;
+    const { chatMessages, ...projectInfo } = updateData;
 
-      // 1. 更新项目信息
-      const project = await projectDao.updateProject(projectId, projectInfo);
+    // 1. 更新项目信息
+    const project = await projectDao.updateProject(projectId, projectInfo);
 
-      // 2. 如果有聊天记录，更新聊天记录
-      if (chatMessages && chatMessages.length > 0) {
-        await chatHistoryDao.saveMessages(projectId, chatMessages);
-      }
-
-      return project;
-    } catch (error) {
-      throw new Error(`更新项目失败: ${error.message}`);
+    // 2. 如果有聊天记录，更新聊天记录
+    if (chatMessages && chatMessages.length > 0) {
+      await chatHistoryDao.saveMessages(projectId, chatMessages);
     }
+
+    return project;
   }
 
   /**
@@ -63,20 +55,15 @@ class ProjectService {
    * @returns {Promise<Object>} 删除的项目对象
    */
   async deleteProject(projectId) {
-    try {
-      // 1. 删除项目
-      const project = await projectDao.deleteProject(projectId);
-      if (!project) {
-        throw new Error('项目不存在');
-      }
-
-      // 2. 删除关联的聊天记录
-      await chatHistoryDao.deleteMessages(projectId);
-
-      return project;
-    } catch (error) {
-      throw new Error(`删除项目失败: ${error.message}`);
+    const project = await projectDao.deleteProject(projectId);
+    if (!project) {
+      throw new Error('项目不存在');
     }
+
+    // 删除关联的聊天记录
+    await chatHistoryDao.deleteMessages(projectId);
+
+    return project;
   }
 
   /**

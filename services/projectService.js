@@ -58,6 +58,15 @@ class ProjectService {
   async getProjectChatHistory(projectId) {
     return chatHistoryDao.getMessages(projectId);
   }
+
+  /**
+   * 根据ID查找项目
+   * @param {String} projectId - 项目ID
+   * @returns {Promise<Object|null>} 项目对象或null
+   */
+  async findProjectById(projectId) {
+    return projectDao.findProjectById(projectId);
+  }
 }
 
 module.exports = new ProjectService();

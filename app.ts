@@ -16,7 +16,7 @@ const app = express();
 
 setRouteConvention({
   controllerNamePattern: 'Controller',
-  routePrefix: 'api',
+  routePrefix: '/api',
   parameterNameResolver: (name) => name.toLowerCase()
 });
 

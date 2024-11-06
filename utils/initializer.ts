@@ -6,6 +6,7 @@ import swaggerSpec from '../config/swagger';
 import { ServiceError, UnknownError } from '../utils/errors';
 import { ControllerLoader } from './controllerLoader';
 import { ControllerRegistry } from './controllerRegistry';
+import { SwaggerSpec } from 'swagger-jsdoc';
 
 export class Initializer {
   static async initialize(app: Express): Promise<void> {
@@ -35,10 +36,15 @@ export class Initializer {
   }
 
   private static initializeSwagger(app: Express): void {
-    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+    const spec = swaggerSpec as SwaggerSpec;
+    
+    console.log('Swagger API 文档路径:', spec.apis);
+    console.log('已加载的模型:', Object.keys(spec.components?.schemas || {}));
+    
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(spec));
     app.get('/swagger.json', (req: Request, res: Response) => {
       res.setHeader('Content-Type', 'application/json');
-      res.send(swaggerSpec);
+      res.send(spec);
     });
   }
 

@@ -3,8 +3,10 @@ import { BaseController } from './baseController';
 import { Request } from 'express';
 
 /**
- * 首页控制器
- * @class HomeController
+ * @swagger
+ * tags:
+ *   name: Home
+ *   description: 首页相关接口
  */
 @Controller('home')
 export class HomeController extends BaseController {
@@ -15,10 +17,40 @@ export class HomeController extends BaseController {
   }
 
   /**
-   * 首页
-   * 支持以下访问方式：
-   * GET /home?id=1
-   * GET /home/1
+   * @swagger
+   * /home/{id}:
+   *   get:
+   *     summary: 获取首页信息
+   *     tags: [Home]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         schema:
+   *           type: integer
+   *         required: true
+   *         description: 记录ID
+   *     responses:
+   *       200:
+   *         description: 成功返回
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 message:
+   *                   type: string
+   *                 id:
+   *                   type: integer
+   *                   nullable: true
+   *                 timestamp:
+   *                   type: string
+   *                   format: date-time
+   *       400:
+   *         description: 参数错误
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
    */
   @Get('/:id?')
   async index(
@@ -43,8 +75,25 @@ export class HomeController extends BaseController {
   }
 
   /**
-   * 健康检查
-   * GET /home/health
+   * @swagger
+   * /home/health:
+   *   get:
+   *     summary: 健康检查
+   *     tags: [Home]
+   *     responses:
+   *       200:
+   *         description: 服务正常运行
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: ok
+   *                 timestamp:
+   *                   type: string
+   *                   format: date-time
    */
   @Get('/health')
   async health() {
@@ -70,8 +119,33 @@ export class HomeController extends BaseController {
   }
 
   /**
-   * 测试POST请求
-   * POST /home/test
+   * @swagger
+   * /home/test:
+   *   post:
+   *     summary: 测试POST请求
+   *     tags: [Home]
+   *     security:
+   *       - bearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               name:
+   *                 type: string
+   *                 description: 用户名
+   *               age:
+   *                 type: integer
+   *                 description: 年龄
+   *             required:
+   *               - name
+   *     responses:
+   *       200:
+   *         description: 成功返回
+   *       401:
+   *         description: 未授权
    */
   @Post('/test')
   async testPost(req: Request) {

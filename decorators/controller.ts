@@ -16,21 +16,30 @@ export interface RouteConfig {
 // 控制器装饰器
 export function Controller(prefixOrOptions?: string) {
   return function (target: any) {
-    // 如果提供了自定义前缀，使用自定义前缀
+    const routePrefix = Reflect.getMetadata('routePrefix', Reflect) || '/api';
+    
+    let prefix = '';
     if (prefixOrOptions) {
-      Reflect.defineMetadata('prefix', prefixOrOptions, target);
+      prefix = `${routePrefix}/${prefixOrOptions}`;
     } else {
-      // 否则使用约定的命名
       const controllerName = target.name.replace('Controller', '').toLowerCase();
-      Reflect.defineMetadata('prefix', controllerName, target);
+      prefix = `${routePrefix}/${controllerName}`;
+    }
+
+    // 确保前缀格式正确
+    prefix = prefix.replace(/\/+/g, '/');  // 处理多余的斜杠
+    if (!prefix.startsWith('/')) {
+      prefix = '/' + prefix;
     }
     
-    // 初始化路由数组
+    Reflect.defineMetadata('prefix', prefix, target);
+    
+    // 确保路由元数据存在
     if (!Reflect.hasMetadata('routes', target)) {
       Reflect.defineMetadata('routes', [], target);
     }
 
-    // 注册到 ControllerRegistry
+    // 注册控制器
     ControllerRegistry.register(target);
   };
 }

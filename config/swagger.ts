@@ -1,61 +1,48 @@
 import swaggerJsdoc from 'swagger-jsdoc';
+import path from 'path';
 
-interface SwaggerOptions {
-  definition: {
-    openapi: string;
-    info: {
-      title: string;
-      version: string;
-      description: string;
-    };
-    servers: Array<{
-      url: string;
-      description: string;
-    }>;
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: string;
-          scheme: string;
-          bearerFormat: string;
-        };
-      };
-    };
-  };
-  apis: string[];
-}
-
-const options: SwaggerOptions = {
+const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Imagica API 文档',
+      title: 'API 文档',
       version: '1.0.0',
-      description: 'Imagica 项目管理系统 API 文档',
+      description: '这是一个使用 Express + TypeScript 构建的 API',
+      contact: {
+        name: '开发团队',
+        email: 'dev@example.com'
+      }
     },
     servers: [
       {
-        url: 'http://localhost:3000',
-        description: '开发服务器',
-      },
+        url: process.env.API_URL || 'http://localhost:3000/api',
+        description: '开发服务器'
+      }
     ],
     components: {
+      schemas: {
+        Error: {
+          type: 'object',
+          properties: {
+            code: { type: 'integer' },
+            message: { type: 'string' }
+          }
+        }
+      },
       securitySchemes: {
         bearerAuth: {
           type: 'http',
           scheme: 'bearer',
-          bearerFormat: 'JWT',
-        },
-      },
-    },
+          bearerFormat: 'JWT'
+        }
+      }
+    }
   },
   apis: [
-    './routes/*.ts',
-    './models/*.ts',
-    './controllers/*.ts'
-  ],
+    path.join(__dirname, '../controllers/**/*.ts'),
+    path.join(__dirname, '../models/**/*.ts'),
+    path.join(__dirname, '../case/**/*.ts')
+  ]
 };
 
-const swaggerSpec = swaggerJsdoc(options);
-
-export default swaggerSpec; 
+export default swaggerJsdoc(options); 

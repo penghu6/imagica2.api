@@ -1,13 +1,26 @@
 const projectDao = require('../dao/projectDao');
+const chatHistoryDao = require('../dao/chatHistoryDao');
 
 class ProjectService {
   /**
    * 创建新项目
    * @param {Object} projectData - 项目数据
-   * @returns {Promise<Object>} 创建的项目
+   * @param {Array} chatMessages - 聊天记录
    */
-  async createProject(projectData) {
-    return projectDao.createProject(projectData);
+  async createProject(projectData, chatMessages = []) {
+    try {
+      // 1. 创建项目
+      const project = await projectDao.createProject(projectData);
+
+      // 2. 保存聊天记录
+      if (chatMessages.length > 0) {
+        await chatHistoryDao.saveMessages(project._id, chatMessages);
+      }
+
+      return project;
+    } catch (error) {
+      throw new Error(`创建项目失败: ${error.message}`);
+    }
   }
 
   /**
@@ -36,6 +49,23 @@ class ProjectService {
    */
   async deleteProject(projectId) {
     return projectDao.deleteProject(projectId);
+  }
+
+  /**
+   * 获取项目的聊天记录
+   * @param {String} projectId - 项目ID
+   */
+  async getProjectChatHistory(projectId) {
+    return chatHistoryDao.getMessages(projectId);
+  }
+
+  /**
+   * 根据ID查找项目
+   * @param {String} projectId - 项目ID
+   * @returns {Promise<Object|null>} 项目对象或null
+   */
+  async findProjectById(projectId) {
+    return projectDao.findProjectById(projectId);
   }
 }
 

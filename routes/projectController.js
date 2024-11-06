@@ -7,11 +7,11 @@ const router = express.Router();
 
 // 引入业务层方法
 const {
-  createProjectService,
-  getUserProjectsService,
-  updateProjectService,
-  deleteProjectService,
-  findProjectByIdService
+  createProject,
+  getUserProjects,
+  updateProject,
+  deleteProject,
+  findProjectById
 } = require("../services/projectService");
 
 const { formatResponse } = require("../utils/tools");
@@ -37,7 +37,7 @@ const { ValidationError } = require("../utils/errors");
  */
 router.post("/", async function (req, res, next) {
   try {
-    const result = await createProjectService(req.body);
+    const result = await createProject(req.body);
     res.send(formatResponse(0, "项目创建成功", result));
   } catch (error) {
     next(error);
@@ -62,7 +62,7 @@ router.post("/", async function (req, res, next) {
  *         description: 成功获取项目列表
  */
 router.get("/user/:userId", async function (req, res) {
-  const result = await getUserProjectsService(req.params.userId);
+  const result = await getUserProjects(req.params.userId);
   res.send(formatResponse(0, "", result));
 });
 
@@ -84,7 +84,7 @@ router.get("/user/:userId", async function (req, res) {
  *         description: 成功获取项目信息
  */
 router.get("/:id", async function (req, res) {
-  const result = await findProjectByIdService(req.params.id);
+  const result = await findProjectById(req.params.id);
   res.send(formatResponse(0, "", result));
 });
 
@@ -114,7 +114,7 @@ router.get("/:id", async function (req, res) {
  *         description: 成功更新项目信息
  */
 router.patch("/:id", async function (req, res) {
-  const result = await updateProjectService(req.params.id, req.body);
+  const result = await updateProject(req.params.id, req.body);
   res.send(formatResponse(0, "", result));
 });
 
@@ -136,7 +136,7 @@ router.patch("/:id", async function (req, res) {
  *         description: 成功删除项目
  */
 router.delete("/:id", async function (req, res) {
-  const result = await deleteProjectService(req.params.id);
+  const result = await deleteProject(req.params.id);
   res.send(formatResponse(0, "", result));
 });
 

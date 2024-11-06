@@ -25,6 +25,7 @@ const projectRouter = require("./routes/projectController");
 const buildRouter = require("./routes/buildController");
 const deploymentRouter = require("./routes/deploymentController");
 const domainVerificationRouter = require('./routes/DomainVerificationController');
+const chatHistoryRouter = require('./routes/chatHistoryController');
 
 // 创建服务器实例
 const app = express();
@@ -43,6 +44,7 @@ app.use("/api/project", projectRouter);
 app.use("/api/build", buildRouter);
 app.use("/api/deployment", deploymentRouter);
 app.use('/api/domain-verification', domainVerificationRouter);
+app.use('/api/chat-history', chatHistoryRouter);
 
 // 配置 Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

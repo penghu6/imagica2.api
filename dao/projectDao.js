@@ -17,7 +17,7 @@ class ProjectDao {
    * @returns {Promise<Object|null>} 项目对象或null
    */
   async findProjectById(projectId) {
-    return ProjectModel.findById(projectId).populate('owner collaborators.user');
+    return ProjectModel.findById(projectId);
   }
 
   /**
@@ -26,7 +26,8 @@ class ProjectDao {
    * @returns {Promise<Array>} 项目列表
    */
   async findProjectsByUserId(userId) {
-    return ProjectModel.find({ owner: userId }).populate('owner collaborators.user');
+    return ProjectModel.find({ userId })
+      .sort({ createdAt: -1 });
   }
 
   /**

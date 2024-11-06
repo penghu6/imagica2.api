@@ -1,12 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { formatResponse } = require("../utils/tools");
-const chatHistoryDao = require('../dao/chatHistoryDao');
-const ChatHistoryModel = require('../models/chatHistoryModel');
-const {
-  createProjectService,
-  getProjectChatHistory
-} = require("../services/projectService");
+const chatHistoryService = require('../services/chatHistoryService');
 
 /**
  * @swagger
@@ -26,12 +21,8 @@ const {
  *         description: 成功获取聊天记录
  */
 router.get("/:projectId", async function (req, res) {
-  try {
-    const result = await getProjectChatHistory(req.params.projectId);
-    res.send(formatResponse(0, "", result));
-  } catch (error) {
-    res.send(formatResponse(1, error.message, null));
-  }
+  const result = await chatHistoryService.getMessages(req.params.projectId);
+  res.send(formatResponse(0, "", result));
 });
 
 /**
@@ -69,12 +60,8 @@ router.get("/:projectId", async function (req, res) {
  *         description: 聊天记录保存成功
  */
 router.post("/:projectId", async function (req, res) {
-  try {
-    const result = await chatHistoryDao.saveMessages(req.params.projectId, req.body.messages);
-    res.send(formatResponse(0, "聊天记录保存成功", result));
-  } catch (error) {
-    res.send(formatResponse(1, error.message, null));
-  }
+  const result = await chatHistoryService.saveMessages(req.params.projectId, req.body.messages);
+  res.send(formatResponse(0, "聊天记录保存成功", result));
 });
 
 /**
@@ -95,12 +82,8 @@ router.post("/:projectId", async function (req, res) {
  *         description: 聊天记录删除成功
  */
 router.delete("/:projectId", async function (req, res) {
-  try {
-    const result = await ChatHistoryModel.deleteOne({ project: req.params.projectId });
-    res.send(formatResponse(0, "聊天记录删除成功", result));
-  } catch (error) {
-    res.send(formatResponse(1, error.message, null));
-  }
+  const result = await chatHistoryService.deleteMessages(req.params.projectId);
+  res.send(formatResponse(0, "聊天记录删除成功", result));
 });
 
 module.exports = router;

@@ -20,23 +20,10 @@ const projectSchema = new mongoose.Schema({
     maxlength: [500, '项目描述不能超过500个字符']
   },
   // 项目所有者
-  owner: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'UserModel',
+  userId: {
+    type: String,
     required: true
   },
-  // 协作者
-  collaborators: [{
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'UserModel'
-    },
-    role: {
-      type: String,
-      enum: ['reader', 'developer', 'maintainer'],
-      default: 'reader'
-    }
-  }],
   // 项目类型
   type: {
     type: String,
@@ -46,54 +33,7 @@ const projectSchema = new mongoose.Schema({
     },
     required: true
   },
-  // 源代码信息
-  sourceCode: {
-    bucket: String,     // 存储桶名称
-    key: String,        // 对象键名
-    version: String,    // 版本号
-    size: Number,       // 文件大小
-    mimeType: String,   // 文件类型
-    etag: String,       // 对象 ETag
-    lastUpdated: Date   // 最后更新时间
-  },
-  // 构建配置
-  buildConfig: {
-    framework: String,
-    nodeVersion: {
-      type: String,
-      default: '16.x'
-    },
-    buildCommand: String,
-    outputDir: String,
-    environmentVariables: {
-      type: Map,
-      of: String
-    }
-  },
-  // 部署配置
-  deploymentConfig: {
-    domain: String,
-    customDomain: String,
-    sslEnabled: {
-      type: Boolean,
-      default: false
-    },
-    containerConfig: {
-      memory: {
-        type: String,
-        default: '512m'
-      },
-      cpu: {
-        type: String,
-        default: '0.5'
-      },
-      port: {
-        type: Number,
-        default: 3000
-      }
-    }
-  },
-  // 项目状态
+ // 项目状态
   status: {
     type: String,
     enum: {
@@ -102,17 +42,7 @@ const projectSchema = new mongoose.Schema({
     },
     default: 'active'
   },
-  stats: {
-    builds: { type: Number, default: 0 },      // 构建次数
-    deployments: { type: Number, default: 0 },  // 部署次数
-    lastBuildAt: Date,                         // 最后构建时间
-    lastDeployAt: Date                         // 最后部署时间
-  },
-  settings: {
-    autoDeploy: { type: Boolean, default: true },  // 自动部署
-    buildNotification: { type: Boolean, default: true }, // 构建通知
-    maintenance: { type: Boolean, default: false }  // 维护模式
-  },
+
   showCodeEditor: {
     type: Boolean,
     default: false, // 是否显示代码编辑器
@@ -147,15 +77,14 @@ const projectSchema = new mongoose.Schema({
   developmentDirectory: {
     type: String,
     required: true,
-    default: function() {
-      return path.join('users', this.owner.toString(), 'projects', this._id.toString(), 'development');
-    }
+    // default: function() {
+    //   return path.join('users', this.owner.toString(), 'projects', this._id.toString(), 'development');
+    // }
   },
-  // 项目标签
-  tags: [{
+  type: {
     type: String,
-    trim: true
-  }],
+    default: "single"
+  },
   // 项目优先级
   priority: {
     type: String,

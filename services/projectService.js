@@ -5,22 +5,19 @@ class ProjectService {
   /**
    * 创建新项目
    * @param {Object} projectData - 项目数据
-   * @param {Array} chatMessages - 聊天记录
    */
-  async createProject(projectData, chatMessages = []) {
-    try {
-      // 1. 创建项目
-      const project = await projectDao.createProject(projectData);
+  async createProject(projectData) {
+    const { chatMessages, ...projectInfo } = projectData;
 
-      // 2. 保存聊天记录
-      if (chatMessages.length > 0) {
-        await chatHistoryDao.saveMessages(project._id, chatMessages);
-      }
+    // 1. 创建项目
+    const project = await projectDao.createProject(projectInfo);
 
-      return project;
-    } catch (error) {
-      throw new Error(`创建项目失败: ${error.message}`);
+    // 2. 保存聊天记录
+    if (chatMessages && chatMessages.length > 0) {
+      await chatHistoryDao.saveMessages(project._id, chatMessages);
     }
+
+    return project;
   }
 
   /**
@@ -39,7 +36,17 @@ class ProjectService {
    * @returns {Promise<Object>} 更新后的项目对象
    */
   async updateProject(projectId, updateData) {
-    return projectDao.updateProject(projectId, updateData);
+    const { chatMessages, ...projectInfo } = updateData;
+
+    // 1. 更新项目信息
+    const project = await projectDao.updateProject(projectId, projectInfo);
+
+    // 2. 如果有聊天记录，更新聊天记录
+    if (chatMessages && chatMessages.length > 0) {
+      await chatHistoryDao.saveMessages(projectId, chatMessages);
+    }
+
+    return project;
   }
 
   /**
@@ -48,24 +55,36 @@ class ProjectService {
    * @returns {Promise<Object>} 删除的项目对象
    */
   async deleteProject(projectId) {
-    return projectDao.deleteProject(projectId);
+    const project = await projectDao.deleteProject(projectId);
+    if (!project) {
+      throw new Error('项目不存在');
+    }
+
+    // 删除关联的聊天记录
+    await chatHistoryDao.deleteMessages(projectId);
+
+    return project;
   }
 
   /**
-   * 获取项目的聊天记录
+   * 获取项目详情（包含聊天记录）
    * @param {String} projectId - 项目ID
+   * @returns {Promise<Object>} 项目详情和聊天记录
    */
-  async getProjectChatHistory(projectId) {
-    return chatHistoryDao.getMessages(projectId);
-  }
+  async getProjectDetail(projectId) {
+    const [project, chatMessages] = await Promise.all([
+      projectDao.findProjectById(projectId),
+      chatHistoryDao.getMessages(projectId)
+    ]);
 
-  /**
-   * 根据ID查找项目
-   * @param {String} projectId - 项目ID
-   * @returns {Promise<Object|null>} 项目对象或null
-   */
-  async findProjectById(projectId) {
-    return projectDao.findProjectById(projectId);
+    if (!project) {
+      throw new Error('项目不存在');
+    }
+
+    return {
+      ...project.toObject(),
+      chatMessages
+    };
   }
 }
 

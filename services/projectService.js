@@ -5,15 +5,16 @@ class ProjectService {
   /**
    * 创建新项目
    * @param {Object} projectData - 项目数据
-   * @param {Array} chatMessages - 聊天记录
    */
-  async createProject(projectData, chatMessages = []) {
+  async createProject(projectData) {
     try {
+      const { chatMessages, ...projectInfo } = projectData;
+
       // 1. 创建项目
-      const project = await projectDao.createProject(projectData);
+      const project = await projectDao.createProject(projectInfo);
 
       // 2. 保存聊天记录
-      if (chatMessages.length > 0) {
+      if (chatMessages && chatMessages.length > 0) {
         await chatHistoryDao.saveMessages(project._id, chatMessages);
       }
 
@@ -66,6 +67,27 @@ class ProjectService {
    */
   async findProjectById(projectId) {
     return projectDao.findProjectById(projectId);
+  }
+
+  /**
+   * 获取项目详情（包含聊天记录）
+   * @param {String} projectId - 项目ID
+   * @returns {Promise<Object>} 项目详情和聊天记录
+   */
+  async getProjectDetail(projectId) {
+    const [project, chatMessages] = await Promise.all([
+      this.findProjectById(projectId),
+      this.getProjectChatHistory(projectId)
+    ]);
+
+    if (!project) {
+      throw new Error('项目不存在');
+    }
+
+    return {
+      ...project.toObject(),
+      chatMessages
+    };
   }
 }
 

@@ -11,7 +11,8 @@ const {
   getUserProjects,
   updateProject,
   deleteProject,
-  findProjectById
+  findProjectById,
+  getProjectDetail
 } = require("../services/projectService");
 
 const { formatResponse } = require("../utils/tools");
@@ -70,7 +71,7 @@ router.get("/user/:userId", async function (req, res) {
  * @swagger
  * /project/{id}:
  *   get:
- *     summary: 根据 id 查找项目
+ *     summary: 根据 id 查找项目（包含聊天记录）
  *     tags: [Project]
  *     parameters:
  *       - in: path
@@ -84,7 +85,7 @@ router.get("/user/:userId", async function (req, res) {
  *         description: 成功获取项目信息
  */
 router.get("/:id", async function (req, res) {
-  const result = await findProjectById(req.params.id);
+  const result = await getProjectDetail(req.params.id);
   res.send(formatResponse(0, "", result));
 });
 

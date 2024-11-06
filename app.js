@@ -24,7 +24,7 @@ const userRouter = require("./routes/userController");
 const projectRouter = require("./routes/projectController");
 const buildRouter = require("./routes/buildController");
 const deploymentRouter = require("./routes/deploymentController");
-const domainVerificationRouter = require('./routes/DomainVerificationController');
+const domainVerificationRouter = require('./routes/domainVerificationController');
 const chatHistoryRouter = require('./routes/chatHistoryController');
 
 // 创建服务器实例

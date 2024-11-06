@@ -3,10 +3,6 @@ const router = express.Router();
 const { formatResponse } = require("../utils/tools");
 const chatHistoryDao = require('../dao/chatHistoryDao');
 const ChatHistoryModel = require('../models/chatHistoryModel');
-const {
-  createProjectService,
-  getProjectChatHistory
-} = require("../services/projectService");
 
 /**
  * @swagger
@@ -27,7 +23,7 @@ const {
  */
 router.get("/:projectId", async function (req, res) {
   try {
-    const result = await getProjectChatHistory(req.params.projectId);
+    const result = await chatHistoryDao.getMessages(req.params.projectId);
     res.send(formatResponse(0, "", result));
   } catch (error) {
     res.send(formatResponse(1, error.message, null));

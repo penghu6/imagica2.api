@@ -25,6 +25,15 @@ class ChatHistoryDao {
     const history = await ChatHistoryModel.findOne({ project: projectId });
     return history ? history.messages : [];
   }
+
+  /**
+   * 删除项目的聊天记录
+   * @param {string} projectId - 项目ID
+   * @returns {Promise<Object|null>} 删除的聊天记录或null
+   */
+  async deleteMessages(projectId) {
+    return ChatHistoryModel.findOneAndDelete({ project: projectId });
+  }
 }
 
 module.exports = new ChatHistoryDao();

@@ -40,7 +40,21 @@ class ProjectService {
    * @returns {Promise<Object>} 更新后的项目对象
    */
   async updateProject(projectId, updateData) {
-    return projectDao.updateProject(projectId, updateData);
+    try {
+      const { chatMessages, ...projectInfo } = updateData;
+
+      // 1. 更新项目信息
+      const project = await projectDao.updateProject(projectId, projectInfo);
+
+      // 2. 如果有聊天记录，更新聊天记录
+      if (chatMessages && chatMessages.length > 0) {
+        await chatHistoryDao.saveMessages(projectId, chatMessages);
+      }
+
+      return project;
+    } catch (error) {
+      throw new Error(`更新项目失败: ${error.message}`);
+    }
   }
 
   /**
@@ -49,24 +63,20 @@ class ProjectService {
    * @returns {Promise<Object>} 删除的项目对象
    */
   async deleteProject(projectId) {
-    return projectDao.deleteProject(projectId);
-  }
+    try {
+      // 1. 删除项目
+      const project = await projectDao.deleteProject(projectId);
+      if (!project) {
+        throw new Error('项目不存在');
+      }
 
-  /**
-   * 获取项目的聊天记录
-   * @param {String} projectId - 项目ID
-   */
-  async getProjectChatHistory(projectId) {
-    return chatHistoryDao.getMessages(projectId);
-  }
+      // 2. 删除关联的聊天记录
+      await chatHistoryDao.deleteMessages(projectId);
 
-  /**
-   * 根据ID查找项目
-   * @param {String} projectId - 项目ID
-   * @returns {Promise<Object|null>} 项目对象或null
-   */
-  async findProjectById(projectId) {
-    return projectDao.findProjectById(projectId);
+      return project;
+    } catch (error) {
+      throw new Error(`删除项目失败: ${error.message}`);
+    }
   }
 
   /**
@@ -76,8 +86,8 @@ class ProjectService {
    */
   async getProjectDetail(projectId) {
     const [project, chatMessages] = await Promise.all([
-      this.findProjectById(projectId),
-      this.getProjectChatHistory(projectId)
+      projectDao.findProjectById(projectId),
+      chatHistoryDao.getMessages(projectId)
     ]);
 
     if (!project) {

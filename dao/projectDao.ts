@@ -27,11 +27,12 @@ class ProjectDao {
    */
   async createProject(param: IProjectParam): Promise<IProjectResult> {
     const projectId = new mongoose.Types.ObjectId();
+    const basePath = process.env.FILE_PATH || 'bucket'; 
 
     // 生成项目路径
     const paths = {
-      root: path.join('bucket', 'users', param.owner.toString(), 'projects', projectId.toString()),
-      development: path.join('bucket', 'users', param.owner.toString(), 'projects', projectId.toString(), 'development')
+      root: path.join(basePath, 'users', param.owner.toString(), 'projects', projectId.toString()),
+      development: path.join(basePath, 'users', param.owner.toString(), 'projects', projectId.toString(), 'development')
     };
 
     // 使用 FileManager 初始化项目

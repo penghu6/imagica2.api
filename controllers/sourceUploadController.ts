@@ -150,8 +150,10 @@ export class SourceUploadController extends BaseController {
   @Get('/snapshot/:userId/:projectId/:version')
   async getSnapshot(req: Request, res: Response) {
     try {
+      console.log("req.params", req.params);
       const { userId, projectId, version } = req.params;
       const codePath = path.join(bucket.root, userId, projectId, 'releases', version, 'code');
+      console.log("codePath", codePath, userId, projectId, version);
       
       res.setHeader('Content-Type', 'application/zip');
       res.setHeader('Content-Disposition', `attachment; filename=source-${version}.zip`);

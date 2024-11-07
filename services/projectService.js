@@ -37,6 +37,15 @@ class ProjectService {
   async deleteProject(projectId) {
     return projectDao.deleteProject(projectId);
   }
+
+  /**
+   * 根据ID查找项目
+   * @param {String} projectId - 项目ID
+   * @returns {Promise<Object>} 项目对象
+   */
+  async findProjectById(projectId) {
+    return projectDao.findProjectById(projectId);
+  }
 }
 
 module.exports = new ProjectService();

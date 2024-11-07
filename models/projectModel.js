@@ -161,6 +161,10 @@ const projectSchema = new mongoose.Schema({
     type: String,
     enum: ['high', 'medium', 'low'],
     default: 'medium'
+  },
+  code: {
+    type: String,
+    default: ''
   }
 }, {
   timestamps: true,

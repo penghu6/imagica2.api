@@ -32,3 +32,4 @@ coverage
 **/.dumi/tmp
 **/.dumi/tmp-test
 **/.dumi/tmp-production
+yarn.lock

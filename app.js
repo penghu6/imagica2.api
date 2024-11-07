@@ -29,6 +29,33 @@ const domainVerificationRouter = require('./routes/DomainVerificationController'
 // 创建服务器实例
 const app = express();
 
+// 添加 CORS 中间件配置
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || '*', // 允许的源,建议配置具体域名
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true, // 允许携带凭证
+  maxAge: 86400 // 预检请求缓存时间
+}));
+
+// 针对特定路由的 CORS 配置
+app.use('/api', cors({
+  origin: process.env.API_ALLOWED_ORIGINS?.split(',') || '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  maxAge: 86400
+}));
+
+// 使用 session 中间件
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: true,
+    saveUninitialized: true,
+  })
+);
+
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

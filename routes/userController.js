@@ -6,14 +6,7 @@ const express = require("express");
 const router = express.Router();
 
 // 引入业务层方法
-const {
-  registerUserService,
-  loginUserService,
-  updateUserService,
-  deleteUserService,
-  findAllUsersService,
-  findUserByIdService
-} = require("../services/userService");
+const userService = require("../services/userService");
 
 const { formatResponse, analysisToken } = require("../utils/tools");
 const { ValidationError } = require("../utils/errors");
@@ -41,7 +34,7 @@ const { ValidationError } = require("../utils/errors");
  */
 router.post("/register", async function (req, res, next) {
   try {
-    const result = await registerUserService(req.body);
+    const result = await userService.registerUser(req.body);
     res.send(formatResponse(0, "注册成功", result));
   } catch (error) {
     next(error);
@@ -73,7 +66,7 @@ router.post("/register", async function (req, res, next) {
  */
 router.post("/login", async function (req, res, next) {
   try {
-    const result = await loginUserService(req.body.email, req.body.password);
+    const result = await userService.loginUser(req.body.email, req.body.password);
     res.send(formatResponse(0, "登录成功", result));
   } catch (error) {
     next(new ValidationError("邮箱或密码错误"));
@@ -91,7 +84,7 @@ router.post("/login", async function (req, res, next) {
  *         description: 成功获取用户列表
  */
 router.get("/", async function (req, res) {
-  const result = await findAllUsersService();
+  const result = await userService.findAllUsers();
   res.send(formatResponse(0, "", result));
 });
 
@@ -113,7 +106,7 @@ router.get("/", async function (req, res) {
  *         description: 成功获取用户信息
  */
 router.get("/:id", async function (req, res) {
-  const result = await findUserByIdService(req.params.id);
+  const result = await userService.findUserById(req.params.id);
   res.send(formatResponse(0, "", result));
 });
 
@@ -143,7 +136,7 @@ router.get("/:id", async function (req, res) {
  *         description: 成功更新用户信息
  */
 router.patch("/:id", async function (req, res) {
-  const result = await updateUserService(req.params.id, req.body);
+  const result = await userService.updateUser(req.params.id, req.body);
   res.send(formatResponse(0, "", result));
 });
 
@@ -165,7 +158,7 @@ router.patch("/:id", async function (req, res) {
  *         description: 成功删除用户
  */
 router.delete("/:id", async function (req, res) {
-  const result = await deleteUserService(req.params.id);
+  const result = await userService.deleteUser(req.params.id);
   res.send(formatResponse(0, "", result));
 });
 

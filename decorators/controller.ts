@@ -39,7 +39,7 @@ function createMethodDecorator(method: HttpMethod) {
       const routes: RouteConfig[] = Reflect.getMetadata('routes', target.constructor) || [];
       
       const originalMethod = descriptor.value;
-      const handler = async function(req: Request, res: Response, next: NextFunction) {
+      const handler = async function(this: any, req: Request, res: Response, next: NextFunction) {
         try {
           const paramNames = getParameterNames(originalMethod);
           const args = paramNames.map(name => {

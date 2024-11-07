@@ -7,6 +7,8 @@ import { ServiceError, UnknownError } from '../utils/errors';
 import { ControllerLoader } from './controllerLoader';
 import { ControllerRegistry } from './controllerRegistry';
 import { SwaggerSpec } from 'swagger-jsdoc';
+import cors from 'cors';
+import { formatResponse } from './tools';
 
 export class Initializer {
   static async initialize(app: Express): Promise<void> {
@@ -49,23 +51,40 @@ export class Initializer {
   }
 
   private static initializeErrorHandlers(app: Express): void {
-    app.use((req: Request, res: Response, next: NextFunction) => {
-      next(createError(404));
+    // 全局错误处理中间件
+    app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+      // 记录错误日志
+      console.error('Global Error:', {
+        message: err.message,
+        stack: err.stack,
+        path: req.path,
+        method: req.method,
+        query: req.query,
+        body: req.body
+      });
+
+      // 确保响应头未发送
+      if (!res.headersSent) {
+        // 发送错误响应
+        return res.status(500).json(formatResponse(
+          500,
+          err.message || '服务器内部错误',
+          null
+        ));
+      }
+
+      // 如果响应头已发送，结束响应
+      res.end();
     });
 
-    app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-      console.error('Error:', err);
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.error(err.stack);
-      }
+    // 处理未捕获的异常
+    process.on('uncaughtException', (err) => {
+      console.error('Uncaught Exception:', err);
+    });
 
-      if (err instanceof ServiceError) {
-        res.status(err.code || 500).json(err.toResponseJSON());
-      } else {
-        const unknownError = new UnknownError();
-        res.status(500).json(unknownError.toResponseJSON());
-      }
+    // 处理未处理的 Promise 拒绝
+    process.on('unhandledRejection', (reason: any, promise) => {
+      console.error('Unhandled Rejection:', reason);
     });
   }
 
@@ -73,11 +92,40 @@ export class Initializer {
     const PORT = parseInt(process.env.PORT || '3000');
     app.listen(PORT, () => {
       console.log(`
-服务器启动成功！
+服务器器启动成功！
 - 本地访问: http://localhost:${PORT}
 - API 文档: http://localhost:${PORT}/api-docs
 - 环境模式: ${process.env.NODE_ENV}
       `);
     });
+  }
+
+  private static initializeMiddlewares(app: Express): void {
+    // CORS 配置
+    const corsOptions = {
+      origin: function (origin: any, callback: any) {
+        // 允许的域名列表
+        const whitelist = [
+          'http://localhost:3000',
+          'http://localhost:8080',
+          'https://your-production-domain.com'
+        ];
+        
+        if (!origin || whitelist.indexOf(origin) !== -1) {
+          callback(null, true);
+        } else {
+          callback(new Error('不允许的跨域请求'));
+        }
+      },
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      credentials: true,
+      maxAge: 86400 // 预检请求缓存时间 24小时
+    };
+
+    // 应用 CORS 中间件
+    app.use(cors(corsOptions));
+
+    // 其他中间件配置...
   }
 }

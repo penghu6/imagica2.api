@@ -15,7 +15,7 @@ export class ProjectController extends BaseController {
     /**
      * 创建新项目
      */
-    @Post()
+    @Post('/')
     async createProject(req: Request) {
         return await this.projectService.createProject(req.body);
     }

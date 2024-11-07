@@ -8,7 +8,7 @@ import { UploadError } from '../utils/errors';
 import { formatResponse } from '../utils/tools';
 import sourceCodeHandler from '../utils/sourceCodeHandler';
 import { bucket } from '../config/storage';
-import { snapshot } from '@webcontainer/snapshot';
+import archiver from 'archiver';
 
 interface UploadRequest extends Request {
   uploadType?: 'zip' | 'file';
@@ -153,28 +153,26 @@ export class SourceUploadController extends BaseController {
       const { userId, projectId, version } = req.params;
       const codePath = path.join(bucket.root, userId, projectId, 'releases', version, 'code');
       
-      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Type', 'application/zip');
       res.setHeader('Content-Disposition', `attachment; filename=source-${version}.zip`);
       
-      const snapshotData = await this.createSnapshot(codePath);
-      res.send(snapshotData);
+      // 使用 archiver 创建 zip
+      const archive = archiver('zip', {
+        zlib: { level: 9 } // 最大压缩级别
+      });
+
+      // 管道输出到响应
+      archive.pipe(res);
+
+      // 添加目录到压缩包
+      archive.directory(codePath, false);
+
+      // 完成压缩
+      await archive.finalize();
+      
     } catch (error: any) {
       console.error('生成快照失败:', error);
-      res.status(500).json({
-        code: -1,
-        msg: '生成快照失败',
-        error: error.message
-      });
-    }
-  }
-
-  private async createSnapshot(sourcePath: string): Promise<Buffer> {
-    try {
-      const folderSnapshot = await snapshot(sourcePath);
-      return folderSnapshot;
-    } catch (error) {
-      console.error('创建快照失败:', error);
-      throw error;
+      res.status(500).json(formatResponse(-1, '生成快照失败', { error: error.message }));
     }
   }
 }

@@ -115,18 +115,18 @@ export const upload = multer({ storage });
  * }
  */
 export async function checkDomainResolution(domain: string, target: string): Promise<boolean> {
+  if (!domain || !target) {
+    throw new Error('域名和目标地址不能为空');
+  }
+
   try {
-    // 使用 promisify 转换回调函数为 Promise
-    const resolveCname = promisify(dns.resolveCname);
-    const addresses = await resolveCname(domain);
+    const records = await dns.promises.resolve(domain, 'A');
+    const targetIp = await dns.promises.resolve(target, 'A');
     
-    // 检查是否包含目标地址（不区分大小写）
-    return addresses.some(address => 
-      address.toLowerCase() === target.toLowerCase()
-    );
-  } catch (error :any) {
-    // 处理未知错误
-    throw  new UnknownError();
+    // 比较解析结果
+    return records.some(record => targetIp.includes(record));
+  } catch (error: any) {
+    throw new Error(`域名解析检查失败: ${error.message}`);
   }
 }
 

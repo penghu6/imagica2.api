@@ -2,10 +2,8 @@ import 'reflect-metadata';
 import { Router, Request, Response, NextFunction } from 'express';
 import { ControllerRegistry } from '../utils/controllerRegistry';
 
-// 路由方法类型
 export type HttpMethod = 'get' | 'post' | 'put' | 'delete' | 'patch';
 
-// 路由配置接口
 export interface RouteConfig {
   path: string;
   method: HttpMethod;
@@ -13,26 +11,17 @@ export interface RouteConfig {
   handler: Function;
 }
 
-// 控制器装饰器
 export function Controller(prefixOrOptions?: string) {
   return function (target: any) {
-    const routePrefix = Reflect.getMetadata('routePrefix', Reflect) || '/api';
-    
-    let prefix = '';
-    if (prefixOrOptions) {
-      prefix = `${routePrefix}/${prefixOrOptions}`;
-    } else {
-      const controllerName = target.name.replace('Controller', '').toLowerCase();
-      prefix = `${routePrefix}/${controllerName}`;
-    }
+    const routePrefix = '/api';
+    const prefix = prefixOrOptions 
+      ? `${routePrefix}/${prefixOrOptions}` 
+      : `${routePrefix}/${target.name.replace('Controller', '').toLowerCase()}`;
 
-    // 确保前缀格式正确
-    prefix = prefix.replace(/\/+/g, '/');  // 处理多余的斜杠
-    if (!prefix.startsWith('/')) {
-      prefix = '/' + prefix;
-    }
+    // 规范化路径
+    const normalizedPrefix = '/' + prefix.replace(/^\/+|\/+$/g, '');
     
-    Reflect.defineMetadata('prefix', prefix, target);
+    Reflect.defineMetadata('prefix', normalizedPrefix, target);
     
     // 确保路由元数据存在
     if (!Reflect.hasMetadata('routes', target)) {
@@ -44,33 +33,40 @@ export function Controller(prefixOrOptions?: string) {
   };
 }
 
-// HTTP 方法装饰器工厂
 function createMethodDecorator(method: HttpMethod) {
-  return function (path: string = ''): MethodDecorator {
-    return function (
-      target: any,
-      propertyKey: string | symbol,
-      descriptor: PropertyDescriptor
-    ) {
+  return function (path: string) {
+    return function (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) {
+      const routes: RouteConfig[] = Reflect.getMetadata('routes', target.constructor) || [];
+      
       const originalMethod = descriptor.value;
-
-      descriptor.value = async function (req: Request, res: Response, next: NextFunction) {
+      const handler = async function(req: Request, res: Response, next: NextFunction) {
         try {
-          const params = await resolveParams(req, target, propertyKey.toString());
-          const result = await originalMethod.apply(this, params);
+          const paramNames = getParameterNames(originalMethod);
+          const args = paramNames.map(name => {
+            if (req.query && req.query[name] !== undefined) {
+              return req.query[name];
+            }
+            if (req.body && req.body[name] !== undefined) {
+              return req.body[name];
+            }
+            if (req.params && req.params[name] !== undefined) {
+              return req.params[name];
+            }
+            return undefined;
+          });
+          
+          const result = await originalMethod.apply(this, args);
           res.json(result);
         } catch (error) {
           next(error);
         }
       };
 
-      // 注册路由
-      const routes = Reflect.getMetadata('routes', target.constructor) || [];
       routes.push({
-        path,
+        path: path.startsWith('/') ? path : `/${path}`,
         method,
         methodName: propertyKey,
-        handler: descriptor.value
+        handler
       });
 
       Reflect.defineMetadata('routes', routes, target.constructor);
@@ -79,61 +75,14 @@ function createMethodDecorator(method: HttpMethod) {
   };
 }
 
-// HTTP 方法装饰器
+function getParameterNames(func: Function): string[] {
+  const fnStr = func.toString().replace(/[\r\n\s]+/g, ' ');
+  const result = fnStr.slice(fnStr.indexOf('(')+1, fnStr.indexOf(')')).split(',');
+  return result.map(param => param.trim()).filter(Boolean);
+}
+
 export const Get = createMethodDecorator('get');
 export const Post = createMethodDecorator('post');
 export const Put = createMethodDecorator('put');
 export const Delete = createMethodDecorator('delete');
 export const Patch = createMethodDecorator('patch');
-
-// 参数装饰器
-export function Param(paramName?: string) {
-  return (target: Object, propertyKey: string | symbol | undefined, parameterIndex: number): void => {
-    if (propertyKey === undefined) {
-      throw new Error('PropertyKey cannot be undefined');
-    }
-    
-    Reflect.defineMetadata(
-      `param:${propertyKey.toString()}:${parameterIndex}`,
-      paramName || '',
-      target.constructor
-    );
-  };
-}
-
-// 参数解析函数
-async function resolveParams(req: Request, target: any, methodName: string): Promise<any[]> {
-  const paramTypes = Reflect.getMetadata('design:paramtypes', target, methodName);
-  if (!paramTypes) return [];
-
-  const params: any[] = [];
-  
-  for (let i = 0; i < paramTypes.length; i++) {
-    const paramName = Reflect.getMetadata(`param:${methodName}:${i}`, target.constructor);
-    const value = await resolveParamValue(req, paramName, paramTypes[i]);
-    params.push(value);
-  }
-
-  return params;
-}
-
-// 参数值解析函数
-async function resolveParamValue(req: Request, paramName: string, paramType: any): Promise<any> {
-  const value = 
-    req.params[paramName] ||
-    req.query[paramName] ||
-    req.body?.[paramName];
-
-  if (value === undefined) return undefined;
-  
-  switch (paramType) {
-    case Number:
-      return Number(value);
-    case Boolean:
-      return Boolean(value);
-    case Date:
-      return new Date(value);
-    default:
-      return value;
-  }
-}

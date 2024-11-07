@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post } from '../decorators/controller';
+import { Controller, Get, Post } from '../decorators/controller';
 import { BaseController } from './baseController';
 import { Request } from 'express';
 
@@ -52,16 +52,16 @@ export class HomeController extends BaseController {
    *             schema:
    *               $ref: '#/components/schemas/Error'
    */
-  @Get('/:id?')
-  async index(
-    @Param('id') id: number
-  ) {
-    return {
-      message: "访问成功",
-      id: id || null,
-      timestamp: new Date().toISOString()
-    };
-  }
+  // @Get('/:id?')
+  // async index(
+  //   @Param('id') id: number
+  // ) {
+  //   return {
+  //     message: "访问成功",
+  //     id: id || null,
+  //     timestamp: new Date().toISOString()
+  //   };
+  // }
 
   /**
    * GET /home/detail/1

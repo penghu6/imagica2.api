@@ -1,42 +1,93 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import path from 'path';
 
+/**
+ * 项目接口定义
+ * @interface IProject
+ * @extends Document
+ */
 export interface IProject extends Document {
+  /** 项目名称 */
   name: string;
+  /** 项目描述 */
   description?: string;
+  /** 项目所有者ID */
   owner: mongoose.Types.ObjectId;
-  collaborators: Array<{
-    user: mongoose.Types.ObjectId;
-    role: 'reader' | 'developer' | 'maintainer';
-  }>;
+  /** 项目类型 */
   type: 'react' | 'vue' | 'html' | 'nextjs';
-  sourceCode: {
-    bucket: string;
-    key: string;
-    version: string;
-    size: number;
-    mimeType: string;
-    etag: string;
-    lastUpdated: Date;
+  
+  /** 
+   * 项目路径管理
+   * root: 项目根目录，格式: bucket/users/{userId}/projects/{projectId}
+   * development: 开发目录，用于存放源代码
+   */
+  paths: {
+    root: string;           
+    development: string;    
   };
-  buildConfig: {
-    framework?: string;
-    nodeVersion: string;
-    buildCommand?: string;
-    outputDir?: string;
-    environmentVariables: Map<string, string>;
-  };
-  isPublishing: boolean;
+
+  /** 
+   * 开发版本管理
+   * version: 版本号，如 dev-1, dev-2
+   * description: 版本描述
+   * snapshot: 版本快照信息
+   */
+  devVersions: Array<{
+    version: string;        
+    description: string;    
+    createdAt: Date;
+    snapshot: {
+      path: string;        // 快照文件路径
+      size: number;        // 快照文件大小
+      etag: string;        // 文件标识
+      lastModified: Date;  // 最后修改时间
+    };
+  }>;
+
+  /** 
+   * 文件映射表
+   * 用于追踪项目中的文件状态和同步情况
+   */
+  fileMapping: Array<{
+    id: string;            // 文件唯一标识
+    relativePath: string;  // 相对项目根目录的路径
+    hash: string;          // 文件内容的哈希值
+    lastModified: Date;    // 最后修改时间
+    lastSyncTime: Date;    // 最后同步时间
+    status: 'synced' | 'modified' | 'conflict';  // 文件状态
+  }>;
+
+  /** 
+   * 聊天记录
+   * 记录用户与AI助手的对话历史
+   */
+  chatHistory: Array<{
+    messageId: mongoose.Types.ObjectId;  // 消息ID
+    devVersion: string;     // 关联的开发版本
+    timestamp: Date;        // 消息时间戳
+    role: 'user' | 'assistant';  // 消息发送者角色
+    content: string;        // 消息内容
+    relatedFiles?: string[];  // 消息相关的文件
+    preserved?: boolean;    // 版本回退时是否保留
+  }>;
+
+  /** 当前开发版本号 */
+  currentDevVersion: string;
+  /** AI是否正在响应 */
   isAITyping: boolean;
-  publishSettings: {
-    customDomain: string;
-  };
-  showPublishSettings: boolean;
-  developmentDirectory: string;
+  /** 项目标签 */
   tags: string[];
-  priority: 'high' | 'medium' | 'low';
+  /** 项目状态 */
+  status: 'development' | 'completed';
+  /** 创建时间 */
+  createdAt: Date;
+  /** 更新时间 */
+  updatedAt: Date;
 }
 
+/**
+ * Mongoose Schema 定义
+ */
 const projectSchema: Schema = new Schema({
   name: {
     type: String,
@@ -50,99 +101,74 @@ const projectSchema: Schema = new Schema({
     maxlength: [500, '项目描述不能超过500个字符']
   },
   owner: {
-    type: Schema.Types.ObjectId,
-    ref: 'UserModel',
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true
   },
-  collaborators: [{
-    user: {
-      type: Schema.Types.ObjectId,
-      ref: 'UserModel'
-    },
-    role: {
-      type: String,
-      enum: ['reader', 'developer', 'maintainer'],
-      default: 'reader'
-    }
-  }],
   type: {
     type: String,
     enum: ['react', 'vue', 'html', 'nextjs'],
     required: true
   },
-  sourceCode: {
-    bucket: String,
-    key: String,
+  paths: {
+    root: String,
+    development: String
+  },
+  devVersions: [{
     version: String,
-    size: Number,
-    mimeType: String,
-    etag: String,
-    lastUpdated: Date
-  },
-  buildConfig: {
-    framework: String,
-    nodeVersion: {
-      type: String,
-      default: '16.x'
-    },
-    buildCommand: String,
-    outputDir: String,
-    environmentVariables: {
-      type: Map,
-      of: String
+    description: String,
+    createdAt: { type: Date, default: Date.now },
+    snapshot: {
+      path: String,
+      size: Number,
+      etag: String,
+      lastModified: Date
     }
-  },
-  isPublishing: {
-    type: Boolean,
-    default: false
-  },
+  }],
+  fileMapping: [{
+    id: String,
+    relativePath: String,
+    hash: String,
+    lastModified: Date,
+    lastSyncTime: Date,
+    status: {
+      type: String,
+      enum: ['synced', 'modified', 'conflict'],
+      default: 'synced'
+    }
+  }],
+  chatHistory: [{
+    messageId: mongoose.Schema.Types.ObjectId,
+    devVersion: String,
+    timestamp: { type: Date, default: Date.now },
+    role: {
+      type: String,
+      enum: ['user', 'assistant']
+    },
+    content: String,
+    relatedFiles: [String],
+    preserved: { type: Boolean, default: false }
+  }],
+  currentDevVersion: String,
   isAITyping: {
     type: Boolean,
     default: false
-  },
-  publishSettings: {
-    customDomain: {
-      type: String,
-      default: ''
-    }
-  },
-  showPublishSettings: {
-    type: Boolean,
-    default: false
-  },
-  developmentDirectory: {
-    type: String,
-    required: true,
-    default: function(this: IProject) {
-      return path.join('users', this.owner.toString(), 'projects', this._id.toString(), 'development');
-    }
   },
   tags: [{
     type: String,
     trim: true
   }],
-  priority: {
+  status: {
     type: String,
-    enum: ['high', 'medium', 'low'],
-    default: 'medium'
+    enum: ['development', 'completed'],
+    default: 'development'
   }
 }, {
-  timestamps: true,
-  toJSON: { virtuals: true },
+  timestamps: true,  // 自动管理 createdAt 和 updatedAt
+  toJSON: { virtuals: true },  // 序列化时包含虚拟字段
   toObject: { virtuals: true }
 });
 
-projectSchema.index({ owner: 1, name: 1 }, { unique: true });
-projectSchema.index({ customDomain: 1 }, { sparse: true });
-
-projectSchema.virtual('latestBuild', {
-  ref: 'BuildModel',
-  localField: '_id',
-  foreignField: 'project',
-  justOne: true,
-  options: { sort: { createdAt: -1 } }
-});
-
-const ProjectModel = mongoose.model<IProject>('ProjectModel', projectSchema);
+const ProjectModel = mongoose.model<IProject>('Project', projectSchema);
 
 export default ProjectModel;

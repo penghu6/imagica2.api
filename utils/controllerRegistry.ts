@@ -54,7 +54,7 @@ export class ControllerRegistry {
         // 注册路由
         app.use('/', instance.router);
 
-        //console.log(`控制器 ${name} 初始化成功，路由前缀: ${info.prefix}`);
+        console.log(`控制器 ${name} 初始化成功，路由前缀: ${info.prefix}`);
 
         // 输出注册的路由信息（可选）
         this.logRoutes(instance, info.prefix);
@@ -112,7 +112,7 @@ export class ControllerRegistry {
   private static logRoutes(controller: BaseController, prefix: string): void {
     const routes = Reflect.getMetadata('routes', controller.constructor) || [];
     routes.forEach((route: any) => {
-      //console.log(`  ${route.method.toUpperCase()} ${prefix}${route.path}`);
+      console.log(`  ${route.method.toUpperCase()} ${prefix}${route.path}`);
     });
   }
 

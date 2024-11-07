@@ -62,13 +62,13 @@ export interface IProject extends Document {
    * 记录用户与AI助手的对话历史
    */
   chatHistory: Array<{
-    messageId: mongoose.Types.ObjectId;  // 消息ID
-    devVersion: string;     // 关联的开发版本
-    timestamp: Date;        // 消息时间戳
-    role: 'user' | 'assistant';  // 消息发送者角色
-    content: string;        // 消息内容
-    relatedFiles?: string[];  // 消息相关的文件
-    preserved?: boolean;    // 版本回退时是否保留
+    messageId: mongoose.Types.ObjectId;
+    devVersion: String,
+    timestamp: Date,
+    role: String,
+    content: String,
+    relatedFiles: [String],
+    preserved: Boolean
   }>;
 
   /** 当前开发版本号 */
@@ -101,8 +101,7 @@ const projectSchema: Schema = new Schema({
     maxlength: [500, '项目描述不能超过500个字符']
   },
   owner: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    type: String,
     required: true
   },
   type: {
@@ -138,16 +137,19 @@ const projectSchema: Schema = new Schema({
     }
   }],
   chatHistory: [{
-    messageId: mongoose.Schema.Types.ObjectId,
+    messageId: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'Message' 
+    },
     devVersion: String,
-    timestamp: { type: Date, default: Date.now },
+    timestamp: Date,
     role: {
       type: String,
       enum: ['user', 'assistant']
     },
     content: String,
     relatedFiles: [String],
-    preserved: { type: Boolean, default: false }
+    preserved: Boolean
   }],
   currentDevVersion: String,
   isAITyping: {

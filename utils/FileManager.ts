@@ -33,7 +33,8 @@ export class FileManager {
    */
   static async initializeProject(type: ProjectType, developmentPath: string): Promise<void> {
     const templateName = this.TEMPLATE_MAP[type];
-    const templatePath = path.join(__dirname, '../templates', templateName);
+    const templatePath = this.getTemplatePath(templateName);
+    console.log("templatePath", templatePath);
     
     // 检查模板是否存在
     if (!await fs.pathExists(templatePath)) {
@@ -124,5 +125,15 @@ export class FileManager {
         hash
       };
     }));
+  }
+
+  static getTemplatePath(templateName: string): string {
+    // 从环境变量中获取基础路径
+    const basePath = process.env.FILE_PATH || '默认路径'; // 如果环境变量未设置，可以提供一个默认路径
+
+    // 构建完整的模板路径
+    const templatePath = path.join(basePath, 'templates', templateName);
+
+    return templatePath;
   }
 }

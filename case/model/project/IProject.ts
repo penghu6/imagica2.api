@@ -1,5 +1,7 @@
+import { List } from "lodash";
 import { IProject } from "../../../models/projectModel";
 import mongoose from 'mongoose';
+import { IMessageParam } from "../message/IMessage";
 
 // API 响应结果接口
 export interface IProjectResult {
@@ -29,4 +31,15 @@ export interface IProjectParam {
   owner: string | mongoose.Types.ObjectId;
   tags?: string[];
   status?: 'development' | 'completed';
+  messages?: IMessageParam[];
 }
+
+export interface ProjectParam {
+    name: string;
+    description?: string;
+    type: 'react' | 'vue' | 'html' | 'nextjs';
+    owner: string | mongoose.Types.ObjectId;
+    tags?: string[];
+    status?: 'development' | 'completed';
+    messages?: IMessageParam[];
+  }

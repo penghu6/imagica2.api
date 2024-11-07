@@ -22,8 +22,17 @@ export function Param(paramName?: string) {
 /**
  * 请求体装饰器
  */
-export function Body(paramName?: string) {
+export function Body<T>(type?: new (...args: any[]) => T) {
   return function (target: any, methodName: string, paramIndex: number) {
-    Reflect.defineMetadata(`body:${methodName}:${paramIndex}`, paramName, target);
+    Reflect.defineMetadata(`body:${methodName}:${paramIndex}`, type, target);
+    // 类型转换和验证逻辑同上
+  };
+}
+
+type ParamSource = 'body' | 'query' | 'params';
+
+export function From(source: ParamSource, paramName?: string) {
+  return function (target: any, methodName: string, paramIndex: number) {
+    Reflect.defineMetadata(`from:${methodName}:${paramIndex}`, { source, paramName }, target);
   };
 } 

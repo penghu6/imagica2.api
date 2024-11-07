@@ -39,27 +39,36 @@ function createMethodDecorator(method: HttpMethod) {
       const routes: RouteConfig[] = Reflect.getMetadata('routes', target.constructor) || [];
       
       const originalMethod = descriptor.value;
-      const handler = async function(this: any, req: Request, res: Response, next: NextFunction) {
+      const handler = async function(req: Request, res: Response, next: NextFunction) {
         try {
-          const paramNames = getParameterNames(originalMethod);
-          const args = paramNames.map(name => {
-            if (req.query && req.query[name] !== undefined) {
-              return req.query[name];
-            }
-            if (req.body && req.body[name] !== undefined) {
-              return req.body[name];
-            }
-            if (req.params && req.params[name] !== undefined) {
-              return req.params[name];
-            }
-            return undefined;
-          });
-          
-          const result = await originalMethod.apply(this, args);
+          // 直接使用 req 对象
+          const result = await originalMethod.call(this, req, res, next);
           res.json(result);
         } catch (error) {
           next(error);
         }
+
+        // try {
+        //   const paramNames = getParameterNames(originalMethod);
+        //   console.log("paramNames", paramNames);  
+        //   const args = paramNames.map(name => {
+        //     if (req.query && req.query[name] !== undefined) {
+        //       return req.query[name];
+        //     }
+        //     if (req.body && req.body[name] !== undefined) {
+        //       return req.body[name];
+        //     }
+        //     if (req.params && req.params[name] !== undefined) {
+        //       return req.params[name];
+        //     }
+        //     return undefined;
+        //   });
+          
+        //   const result = await originalMethod.apply(this, args);
+        //   res.json(result);
+        // } catch (error) {
+        //   next(error);
+        // }
       };
 
       routes.push({

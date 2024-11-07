@@ -6,6 +6,8 @@ import fs from 'fs-extra';
 import mongoose from 'mongoose';
 import { FileManager } from '../utils/FileManager';
 import UserModel from '../models/userModel';
+import MessageDao from './messageDao';
+import { forEach } from 'lodash';
 
 interface ProjectList {
   total: number;
@@ -13,6 +15,13 @@ interface ProjectList {
 }
 
 class ProjectDao {
+
+  private messageDao: MessageDao;
+
+  constructor() {
+    this.messageDao = new MessageDao();
+  }
+
   /**
    * 创建新项目
    */
@@ -99,25 +108,32 @@ class ProjectDao {
       return null;
     }
 
-    // 2. 过滤不允许更新的字段
-    const allowedUpdates = {
-      name: updateData.name,
-      description: updateData.description,
-      tags: updateData.tags,
-      status: updateData.status
-    };
+    //2.删除当前项目所有消息
+    await this.messageDao.deleteNonPreservedMessages(projectId, existingProject.currentDevVersion);
+    //3. 更新项目消息
+    if (updateData.messages) {
+      updateData.messages.forEach(msg => {
+        existingProject.chatHistory.push({
+          messageId:new mongoose.Types.ObjectId(),
+          devVersion: msg.devVersion,
+          timestamp: new Date(),
+          role: msg.role,
+          content: msg.content,
+          relatedFiles: [""],
+          preserved: msg.preserved || false
+        });
+      });
+    }
 
     // 3. 更新项目
     const project = await ProjectModel.findByIdAndUpdate(
       projectId,
-      { $set: allowedUpdates },
       { 
-        new: true,           // 返回更新后的文档
-        runValidators: true, // 运行验证器
-        context: 'query'     // 在查询上下文中运行
+        new: true,           
+        runValidators: true, 
+        context: 'query'     
       }
     ).populate('owner');
-
     if (!project) return null;
 
     // 4. 转换为 API 响应格式

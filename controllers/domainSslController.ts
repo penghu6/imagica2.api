@@ -59,9 +59,11 @@ export class DomainSslController extends BaseController {
      *         description: 域名解析验证结果
      */
     @Get('/verify')
-    async verifyDomain(domain: string, target: string) {
-        if (!domain || !target) {
-            throw new Error('域名和目标地址不能为空');
+    async verifyDomain(req: Request) {
+        const domain = req.query.domain as string;
+        const target = req.query.target as string;
+        if (typeof domain !== 'string' || typeof target !== 'string') {
+            throw new Error('域名和目标地址必须是字符串类型');
         }
 
         try {

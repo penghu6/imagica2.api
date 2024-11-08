@@ -31,7 +31,7 @@ export interface IUser extends Document {
   plan: 'free' | 'pro' | 'enterprise';
   quota: IQuota;
   quotaUsage: IQuotaUsage;
-  avatar: string;
+  avatar?: string;
   profile: IProfile;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }

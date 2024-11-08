@@ -100,32 +100,33 @@ export class Initializer {
     });
   }
 
-  private static initializeMiddlewares(app: Express): void {
-    // CORS 配置
-    const corsOptions = {
-      origin: function (origin: any, callback: any) {
-        // 允许的域名列表
-        const whitelist = [
-          'http://localhost:3000',
-          'http://localhost:8080',
-          'https://your-production-domain.com'
-        ];
+  // private static initializeMiddlewares(app: Express): void {
+  //   // CORS 配置
+  //   const corsOptions = {
+  //     origin: function (origin: any, callback: any) {
+  //       // 允许的域名列表
+  //       const whitelist = [
+  //         'http://localhost:3000',
+  //         'http://localhost:5173',
+  //         'http://localhost:8080',
+  //         'https://your-production-domain.com'
+  //       ];
         
-        if (!origin || whitelist.indexOf(origin) !== -1) {
-          callback(null, true);
-        } else {
-          callback(new Error('不允许的跨域请求'));
-        }
-      },
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-      credentials: true,
-      maxAge: 86400 // 预检请求缓存时间 24小时
-    };
+  //       if (!origin || whitelist.indexOf(origin) !== -1) {
+  //         callback(null, true);
+  //       } else {
+  //         callback(new Error('不允许的跨域请求'));
+  //       }
+  //     },
+  //     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  //     allowedHeaders: ['Content-Type', 'Authorization'],
+  //     credentials: true,
+  //     maxAge: 86400 // 预检请求缓存时间 24小时
+  //   };
 
-    // 应用 CORS 中间件
-    app.use(cors(corsOptions));
+  //   // 应用 CORS 中间件
+  //   app.use(cors(corsOptions));
 
-    // 其他中间件配置...
-  }
+  //   // 其他中间件配置...
+  // }
 }

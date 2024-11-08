@@ -1,5 +1,5 @@
 import { List } from 'lodash';
-import { IUserParam, IUserResult } from '../case/model/user/IUser';
+import { IUserParam, IUserResult, UserParam } from '../case/model/user/IUser';
 import  UserDao  from '../dao/userDao';
 
 class UserService {
@@ -14,7 +14,7 @@ class UserService {
    * @param userData 用户数据
    * @returns 创建的用户对象
    */
-  async createUser(param: IUserParam): Promise<IUserResult> {
+  async createUser(param: UserParam): Promise<IUserResult> {
     return this.userDao.createUser(param);
   }
 

@@ -8,10 +8,22 @@ class UserDao {
    * @returns 返回创建成功的用户信息
    */
   async createUser(param: IUserParam): Promise<IUserResult> {
-    param.avatar = param.avatar || '';
-    param.name = param.name || '';
-    const user = new UserModel(param);
-    return user.save();
+
+    const userData = {
+      ...param,
+      avatar: param.avatar || '',
+      email: param.email || '',
+      createTime: new Date(),
+      updateTime: new Date()
+    };
+
+    const result = await UserModel.create(userData);
+    return {
+        id: result._id.toString(), 
+        username: result.username,
+        email: result.email,
+        avatar: result.avatar || ''
+    };
   }
 
   /**
@@ -47,13 +59,13 @@ class UserDao {
    * @returns 返回更新后的用户信息，如果未找到则返回 null
    */
   async updateUserById(
-    userId: string, 
+    userId: string,
     updateData: Partial<IUserParam>
   ): Promise<IUserResult | null> {
     return UserModel.findByIdAndUpdate(
       userId,
       updateData,
-      { 
+      {
         new: true,        // 返回更新后的文档
         runValidators: true  // 运行验证器
       }

@@ -1,17 +1,14 @@
 import { IUser } from "../../../models/userModel";
 
-export interface IUserResult {
-  id: string;
-  name: string;
+export interface IUserResult extends IUser {
+  id?: string;
   email: string;
-  avatar?: string;
-  projectCount: number;
-  lastActive: Date;
+  avatar: string;
 }
 
-export interface IUserParam {
+export interface IUserParam extends IUser {
   name: string;
   email: string;
   password: string;
-  avatar?: string;
+  avatar: string;
 }

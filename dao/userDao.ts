@@ -8,6 +8,8 @@ class UserDao {
    * @returns 返回创建成功的用户信息
    */
   async createUser(param: IUserParam): Promise<IUserResult> {
+    param.avatar = param.avatar || '';
+    param.name = param.name || '';
     const user = new UserModel(param);
     return user.save();
   }

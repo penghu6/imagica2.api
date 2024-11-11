@@ -150,26 +150,30 @@ export class SourceUploadController extends BaseController {
   @Get('/snapshot/:userId/:projectId/:version')
   async getSnapshot(req: Request, res: Response) {
     try {
-      console.log("req.params", req.params);
       const { userId, projectId, version } = req.params;
       const codePath = path.join(bucket.root, userId, projectId, 'releases', version, 'code');
-      console.log("codePath", codePath, userId, projectId, version);
+      
+      // 检查目录是否存在
+      try {
+        await fs.access(codePath);
+      } catch (err) {
+        return res.status(404).json(formatResponse(-1, '快照版本不存在', { version }));
+      }
       
       res.setHeader('Content-Type', 'application/zip');
       res.setHeader('Content-Disposition', `attachment; filename=source-${version}.zip`);
       
-      // 使用 archiver 创建 zip
       const archive = archiver('zip', {
-        zlib: { level: 9 } // 最大压缩级别
+        zlib: { level: 9 }
       });
 
-      // 管道输出到响应
+      // 监听错误事件
+      archive.on('error', (err) => {
+        throw err;
+      });
+
       archive.pipe(res);
-
-      // 添加目录到压缩包
       archive.directory(codePath, false);
-
-      // 完成压缩
       await archive.finalize();
       
     } catch (error: any) {

@@ -9,6 +9,7 @@ import { ControllerRegistry } from './controllerRegistry';
 import { SwaggerSpec } from 'swagger-jsdoc';
 import cors from 'cors';
 import { formatResponse } from './tools';
+import { createExpressServer } from 'routing-controllers';
 
 export class Initializer {
   static async initialize(app: Express): Promise<void> {
@@ -16,6 +17,9 @@ export class Initializer {
       await this.initializeControllers(app);
       this.initializeSwagger(app);
       this.initializeErrorHandlers(app);
+      createExpressServer({
+        controllers: [__dirname + '/controllers/*.ts'],
+      }).listen(3001); 
       await this.startServer(app);
     } catch (error) {
       console.error('初始化失败:', error);

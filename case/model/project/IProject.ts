@@ -21,6 +21,10 @@ export interface IProjectResult {
   status: 'development' | 'completed';
   currentDevVersion: string;
   tags?: string[];
+  path: {
+    root: string;           
+    development: string;    
+  };
 }
 
 // API 请求参数接口

@@ -71,6 +71,30 @@ class UserDao {
       }
     );
   }
+
+  /**
+   * 根据用户名和密码查找用户
+   * @param username 用户名
+   * @param password 密码
+   * @returns 返回查找到的用户信息，如果未找到则返回 null
+   */
+  async findUserByCredentials(username: string, password: string): Promise<IUserResult | null> {
+    const result = await UserModel.findOne({ 
+        username,
+        password  // 注意：实际项目中应该使用加密后的密码比较
+    });
+    
+    if (!result) {
+        return null;
+    }
+
+    return {
+        id: result._id.toString(),
+        username: result.username,
+        email: result.email,
+        avatar: result.avatar || ''
+    };
+  }
 }
 
 export default UserDao;

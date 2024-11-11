@@ -1,5 +1,5 @@
 import { IProjectParam, IProjectResult } from '../case/model/project/IProject';
-import ProjectModel from '../models/projectModel';
+import ProjectModel, { IProject } from '../models/projectModel';
 import { Types } from 'mongoose';
 import path from 'path';
 import fs from 'fs-extra';
@@ -165,7 +165,7 @@ class ProjectDao {
     return result !== null;
   }
 
-  private convertToProjectResult(project: any): IProjectResult {
+  private convertToProjectResult(project: IProject): IProjectResult {
     return {
       id: project._id.toString(),
       name: project.name,
@@ -182,7 +182,8 @@ class ProjectDao {
       lastModified: new Date(project._id.getTimestamp()),
       status: project.status,
       currentDevVersion: project.currentDevVersion,
-      tags: project.tags
+      tags: project.tags,
+      path: project.paths
     };
   }
 }

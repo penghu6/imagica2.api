@@ -31,7 +31,8 @@
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "**/bucket/**",
   ],
   "ts-node": {
     "transpileOnly": true,

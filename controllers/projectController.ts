@@ -1,5 +1,5 @@
-import { Request } from 'express';
-import { Controller, Post } from '../decorators/controller';
+import { Request, Response } from 'express';
+import { Controller, Post, Get } from '../decorators/controller';
 import ProjectService from '../services/projectService';
 import { formatResponse } from '../utils/tools';
 import { BaseController } from './baseController';
@@ -41,6 +41,20 @@ import { BaseController } from './baseController';
  *           type: string
  *           enum: [development, completed]
  *           description: 项目状态
+ *     FileStructure:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *         type:
+ *           type: string
+ *           enum: [file, directory]
+ *         path:
+ *           type: string
+ *         children:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/FileStructure'
  */
 
 @Controller('projects')
@@ -258,4 +272,94 @@ export class ProjectController extends BaseController {
         }
     }
 
+    /**
+     * @swagger
+     * /api/projects/{userId}/{projectId}/structure:
+     *   get:
+     *     summary: 获取项目目录结构
+     *     tags: [Projects]
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         required: true
+     *         schema:
+     *           type: string
+     *       - in: path
+     *         name: projectId
+     *         required: true
+     *         schema:
+     *           type: string
+     *     responses:
+     *       200:
+     *         description: 获取成功
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/FileStructure'
+     */
+    @Get('/:userId/:projectId/structure')
+    async getProjectStructure(req: Request, res: Response) {
+        try {
+            const { userId, projectId } = req.params;
+            const structure = await this.projectService.getProjectStructure(userId, projectId);
+            res.json(formatResponse(0, '获取成功', structure));
+        } catch (error: any) {
+            res.status(500).json(formatResponse(-1, '获取项目结构失败', { error: error.message }));
+        }
+    }
+
+    /**
+     * @swagger
+     * /api/projects/{userId}/{projectId}/file:
+     *   get:
+     *     summary: 获取文件内容
+     *     tags: [Projects]
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         required: true
+     *         schema:
+     *           type: string
+     *       - in: path
+     *         name: projectId
+     *         required: true
+     *         schema:
+     *           type: string
+     *       - in: query
+     *         name: path
+     *         required: true
+     *         schema:
+     *           type: string
+     *     responses:
+     *       200:
+     *         description: 获取成功
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 content:
+     *                   type: string
+     */
+    @Get('/:userId/:projectId/file')
+    async getFileContent(req: Request, res: Response) {
+        try {
+            const { userId, projectId } = req.params;
+            const { path: filePath } = req.query;
+            
+            if (!filePath) {
+                return res.status(400).json(formatResponse(-1, '文件路径不能为空'));
+            }
+
+            const content = await this.projectService.getFileContent(
+                userId,
+                projectId,
+                filePath as string
+            );
+            
+            res.json(formatResponse(0, '获取成功', { content }));
+        } catch (error: any) {
+            res.status(500).json(formatResponse(-1, '获取文件内容失败', { error: error.message }));
+        }
+    }
 } 

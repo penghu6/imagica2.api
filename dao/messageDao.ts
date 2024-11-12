@@ -128,25 +128,13 @@ class MessageDao {
     projectId: string | Types.ObjectId,
     devVersion: string
   ): Promise<boolean> {
-    const session = await MessageModel.startSession();
-    
-    try {
-      let success = false;
-      
-      await session.withTransaction(async () => {
-        const result = await MessageModel.deleteMany({
-          projectId,
-          devVersion,
-          preserved: false
-        }).session(session);
-        
-        success = result.deletedCount > 0;
-      });
+    const result = await MessageModel.deleteMany({
+      projectId,
+      devVersion,
+      preserved: false
+    });
 
-      return success;
-    } finally {
-      await session.endSession();
-    }
+    return result.deletedCount > 0;
   }
 
   /**

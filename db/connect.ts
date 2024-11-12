@@ -20,7 +20,7 @@ if (!process.env.DB_HOST || !process.env.DB_NAME) {
 
 // 连接数据库
 mongoose.connect(dbURI, {
-  serverSelectionTimeoutMS: 5000,
+  serverSelectionTimeoutMS: 10000,
   socketTimeoutMS: 45000,
   family: 4
 });
@@ -33,6 +33,7 @@ mongoose.connection.on('connected', () => {
 // 监听错误事件
 mongoose.connection.on('error', (err: Error) => {
   console.error('数据库连接错误:', err);
+  process.exit(1);
 });
 
 // 监听断开连接事件

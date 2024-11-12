@@ -8,6 +8,7 @@ import { FileManager } from '../utils/FileManager';
 import UserModel from '../models/userModel';
 import MessageDao from './messageDao';
 import { forEach } from 'lodash';
+import MessageModel from '../models/messageModel';
 
 interface ProjectList {
   total: number;
@@ -113,9 +114,20 @@ class ProjectDao {
     await this.messageDao.deleteNonPreservedMessages(projectId, existingProject.currentDevVersion);
     //3. 更新项目消息
     if (updateData.messages) {
-      updateData.messages.forEach(msg => {
+      for (const msg of updateData.messages) {
+        // 创建 Message 文档
+        const message = new MessageModel({
+          // 假设 Message 模型需要以下字段
+          projectId,
+          devVersion: msg.devVersion,
+          role: msg.role,
+          content: msg.content,
+          // 其他必需字段
+        });
+        existingProject.chatHistory=[];
+        // 将 messageId 添加到 chatHistory
         existingProject.chatHistory.push({
-          messageId:new mongoose.Types.ObjectId(),
+          messageId: message._id,
           devVersion: msg.devVersion,
           timestamp: new Date(),
           role: msg.role,
@@ -123,12 +135,16 @@ class ProjectDao {
           relatedFiles: [""],
           preserved: msg.preserved || false
         });
-      });
+      }
+
+      // 保存更新后的 existingProject
+      await existingProject.save();
     }
 
-    // 3. 更新项目
+    // 4. 更新项目
     const project = await ProjectModel.findByIdAndUpdate(
       projectId,
+      updateData,
       { 
         new: true,           
         runValidators: true, 
@@ -136,8 +152,11 @@ class ProjectDao {
       }
     ).populate('owner');
     if (!project) return null;
+    
+      // 保存更新后的 existingProject
+      await existingProject.save();
 
-    // 4. 转换为 API 响应格式
+    // 5. 转换为 API 响应格式
     const result = this.convertToProjectResult(project);
 
     return result;
@@ -183,7 +202,8 @@ class ProjectDao {
       status: project.status,
       currentDevVersion: project.currentDevVersion,
       tags: project.tags,
-      path: project.paths
+      path: project.paths,
+      chatHistory: project.chatHistory,
     };
   }
 }

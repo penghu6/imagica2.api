@@ -43,8 +43,7 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "validate.js": "^0.13.1",
-    "winston": "^3.16.0",
-    "routing-controllers": "^0.10.4"
+    "winston": "^3.16.0"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.6",
@@ -71,7 +70,6 @@
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.6.3",
-    "routing-controllers": "^0.10.4"
+    "typescript": "^5.6.3"
   }
 }

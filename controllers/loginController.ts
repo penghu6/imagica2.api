@@ -3,7 +3,7 @@ import { Controller, Post } from "../decorators/controller";
 import LoginService from "../services/loginService";
 import { BaseController } from "./baseController";
 
-@Controller('login')
+@Controller('auth')
 export class LoginController extends BaseController {
     private loginService: LoginService;
     constructor() {

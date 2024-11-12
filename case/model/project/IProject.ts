@@ -25,6 +25,15 @@ export interface IProjectResult {
     root: string;           
     development: string;    
   };
+ chatHistory: Array<{
+    messageId: mongoose.Types.ObjectId;
+    devVersion: String,
+    timestamp: Date,
+    role: String,
+    content: String,
+    relatedFiles: [String],
+    preserved: Boolean
+  }>;
 }
 
 // API 请求参数接口

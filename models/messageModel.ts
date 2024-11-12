@@ -111,7 +111,7 @@ const messageSchema: Schema = new Schema({
   },
   sequence: {
     type: Number,
-    required: true
+    required: false
   },
   metadata: {
     aiModel: String,

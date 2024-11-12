@@ -3,6 +3,7 @@ import { Controller, Post, Get } from '../decorators/controller';
 import ProjectService from '../services/projectService';
 import { formatResponse } from '../utils/tools';
 import { BaseController } from './baseController';
+import { IProjectParam } from '../case/model/project/IProject';
 
 /**
  * @swagger
@@ -211,12 +212,37 @@ export class ProjectController extends BaseController {
      *         application/json:
      *           schema:
      *             type: object
-     *             required:
+     *             properties:
      *               projectId:
      *                 type: string
      *                 description: 项目ID
      *               param:
-     *                 $ref: '#/components/schemas/ProjectParam'
+     *                 type: object
+     *                 properties:
+     *                   name:
+     *                     type: string
+     *                     description: 项目名称
+     *                   description:
+     *                     type: string
+     *                     description: 项目描述
+     *                   type:
+     *                     type: string
+     *                     enum: [react, vue, html, nextjs]
+     *                     description: 项目类型
+     *                   owner:
+     *                     type: string
+     *                     description: 项目所有者ID
+     *                   tags:
+     *                     type: array
+     *                     items:
+     *                       type: string
+     *                     description: 项目标签
+     *                   status:
+     *                     type: string
+     *                     enum: [development, completed]
+     *                     description: 项目状态
+     *             required:
+     *               - projectId
      *     responses:
      *       200:
      *         description: 更新成功
@@ -224,12 +250,36 @@ export class ProjectController extends BaseController {
      *           application/json:
      *             schema:
      *               type: object
+     *               properties:
+     *                 code:
+     *                   type: number
+     *                   example: 0
+     *                 message:
+     *                   type: string
+     *                   example: 更新项目成功
+     *                 data:
+     *                   $ref: '#/components/schemas/IProjectResult'
+     *       400:
+     *         description: 请求参数错误
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 code:
+     *                   type: number
+     *                   example: 1
+     *                 message:
+     *                   type: string
+     *                   example: 项目ID不能为空
+     *                 data:
+     *                   type: object
      */
     @Post('/update')
     async updateProject(req: Request) {
         try {
             const projectId = req.body.projectId;
-            const param = req.body.param;
+            const param = req.body.param as Partial<IProjectParam>;
             const project = await this.projectService.updateProject(projectId, param);
             return formatResponse(0, '更新项目成功', project);
         } catch (error: any) {

@@ -9,6 +9,7 @@ import UserModel from '../models/userModel';
 import MessageDao from './messageDao';
 import { forEach } from 'lodash';
 import MessageModel from '../models/messageModel';
+import { IMessageParam } from '../case/model/message/IMessage';
 
 interface ProjectList {
   total: number;
@@ -186,24 +187,36 @@ class ProjectDao {
 
   private convertToProjectResult(project: IProject): IProjectResult {
     return {
+      // ===== 项目基础信息 =====
       id: project._id.toString(),
       name: project.name,
-      description: project.description,
+      description: project.description || "",
+      createdAt: project.createdAt.toISOString(),
+      updatedAt: project.updatedAt.toISOString(),
+      token: (project as any).token,
       type: project.type,
-      owner: {
-        id: project.owner._id?.toString() || project.owner.toString(),
-        name: 'Test User',  // 暂时使用假数据
-        email: 'test@example.com'  // 暂时使用假数据
-      },
-      versionCount: project.devVersions?.length || 0,
-      fileCount: project.fileMapping?.length || 0,
-      chatCount: project.chatHistory?.length || 0,
-      lastModified: new Date(project._id.getTimestamp()),
       status: project.status,
-      currentDevVersion: project.currentDevVersion,
       tags: project.tags,
-      path: project.paths,
-      chatHistory: project.chatHistory,
+
+      // ===== 项目代码与对话 =====
+      code: (project as any).code,
+      messages: project.chatHistory as unknown as IMessageParam[],
+
+      // ===== 路径管理 =====
+      // paths: project.paths,
+      // ===== 文件管理 =====
+      // fileMapping: project.fileMapping,
+      
+      // ===== 版本管理 =====
+      devVersions: project.devVersions,
+      currentDevVersion: project.currentDevVersion,
+
+
+      // ===== UI 管理 =====
+      uiState: project.uiState,
+
+      // ===== 发布管理 =====
+      publishSettings: project.publishSettings,
     };
   }
 }

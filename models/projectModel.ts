@@ -1,5 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import path from 'path';
+import { IMessageResult } from '../case/model/message/IMessage';
+import { IProjectResult } from '../case/model/project/IProject';
 
 /**
  * 项目接口定义
@@ -14,7 +16,7 @@ export interface IProject extends Document {
   /** 项目所有者ID */
   owner: mongoose.Types.ObjectId;
   /** 项目类型 */
-  type: 'react' | 'vue' | 'html' | 'nextjs';
+  type: IProjectResult['type'];
   
   /** 
    * 项目路径管理
@@ -69,16 +71,19 @@ export interface IProject extends Document {
     content: String,
     relatedFiles: [String],
     preserved: Boolean
-  }>;
-
+  }>;  
   /** 当前开发版本号 */
   currentDevVersion: string;
-  /** AI是否正在响应 */
-  isAITyping: boolean;
   /** 项目标签 */
   tags: string[];
   /** 项目状态 */
   status: 'development' | 'completed';
+  /** 用户界面状态 */
+  uiState: IProjectResult['uiState'];
+
+  /** 发布设置 */
+  publishSettings: IProjectResult['publishSettings'];
+  
   /** 创建时间 */
   createdAt: Date;
   /** 更新时间 */
@@ -152,10 +157,6 @@ const projectSchema: Schema = new Schema({
     preserved: Boolean
   }],
   currentDevVersion: String,
-  isAITyping: {
-    type: Boolean,
-    default: false
-  },
   tags: [{
     type: String,
     trim: true
@@ -164,6 +165,11 @@ const projectSchema: Schema = new Schema({
     type: String,
     enum: ['development', 'completed'],
     default: 'development'
+  },
+  /** 用户界面状态 */
+  uiState: {
+    type: Schema.Types.Mixed,
+    default: {}
   }
 }, {
   timestamps: true,  // 自动管理 createdAt 和 updatedAt

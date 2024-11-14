@@ -1,5 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import path from 'path';
+import { IMessageResult } from '../case/model/message/IMessage';
+import { IProjectResult } from '../case/model/project/IProject';
 
 /**
  * 项目接口定义
@@ -14,7 +16,7 @@ export interface IProject extends Document {
   /** 项目所有者ID */
   owner: mongoose.Types.ObjectId;
   /** 项目类型 */
-  type: 'react' | 'vue' | 'html' | 'nextjs';
+  type: IProjectResult['type'];
   
   /** 
    * 项目路径管理
@@ -60,25 +62,22 @@ export interface IProject extends Document {
   /** 
    * 聊天记录
    * 记录用户与AI助手的对话历史
+   * 直接使用 IMessageResult 类型保持一致性, 去掉 chatHistory 名字，改为 messages，这样减少歧义
    */
-  chatHistory: Array<{
-    messageId: mongoose.Types.ObjectId;
-    devVersion: String,
-    timestamp: Date,
-    role: String,
-    content: String,
-    relatedFiles: [String],
-    preserved: Boolean
-  }>;
+  messages: Array<IMessageResult>;
 
   /** 当前开发版本号 */
   currentDevVersion: string;
-  /** AI是否正在响应 */
-  isAITyping: boolean;
   /** 项目标签 */
   tags: string[];
   /** 项目状态 */
   status: 'development' | 'completed';
+  /** 用户界面状态 */
+  uiState: IProjectResult['uiState'];
+
+  /** 发布设置 */
+  publishSettings: IProjectResult['publishSettings'];
+  
   /** 创建时间 */
   createdAt: Date;
   /** 更新时间 */
@@ -136,26 +135,59 @@ const projectSchema: Schema = new Schema({
       default: 'synced'
     }
   }],
-  chatHistory: [{
+  messages: [{
     messageId: { 
       type: mongoose.Schema.Types.ObjectId, 
       ref: 'Message' 
     },
     devVersion: String,
-    timestamp: Date,
     role: {
       type: String,
-      enum: ['user', 'assistant']
+      enum: ['user', 'assistant'],
+      required: true
     },
     content: String,
-    relatedFiles: [String],
-    preserved: Boolean
+    type: {
+      type: String,
+      enum: ['text', 'code', 'file', 'system'],
+      default: 'text'
+    },
+    sequence: Number,
+    status: {
+      type: String,
+      enum: ['pending', 'sent', 'error'],
+      default: 'pending'
+    },
+    codeSnippet: {
+      language: String,
+      code: String,
+      filePath: String,
+      lineStart: Number,
+      lineEnd: Number
+    },
+    relatedFiles: [{
+      fileId: String,
+      relativePath: String,
+      operation: {
+        type: String,
+        enum: ['create', 'update', 'delete']
+      }
+    }],
+    metadata: {
+      aiModel: String,
+      tokens: Number,
+      processingTime: Number
+    },
+    parentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Message'
+    },
+    preserved: {
+      type: Boolean,
+      default: false
+    }
   }],
   currentDevVersion: String,
-  isAITyping: {
-    type: Boolean,
-    default: false
-  },
   tags: [{
     type: String,
     trim: true
@@ -164,6 +196,11 @@ const projectSchema: Schema = new Schema({
     type: String,
     enum: ['development', 'completed'],
     default: 'development'
+  },
+  /** 用户界面状态 */
+  uiState: {
+    type: Schema.Types.Mixed,
+    default: {}
   }
 }, {
   timestamps: true,  // 自动管理 createdAt 和 updatedAt

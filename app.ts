@@ -8,7 +8,8 @@ import { setRouteConvention } from './decorators/routeConvention';
 import { Initializer } from './utils/initializer';
 
 import dotenv from 'dotenv';
-dotenv.config();
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env';
+dotenv.config({ path: envFile });
 
 import './db/init';
 

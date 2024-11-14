@@ -62,16 +62,10 @@ export interface IProject extends Document {
   /** 
    * 聊天记录
    * 记录用户与AI助手的对话历史
+   * 直接使用 IMessageResult 类型保持一致性, 去掉 chatHistory 名字，改为 messages，这样减少歧义
    */
-  chatHistory: Array<{
-    messageId: mongoose.Types.ObjectId;
-    devVersion: String,
-    timestamp: Date,
-    role: String,
-    content: String,
-    relatedFiles: [String],
-    preserved: Boolean
-  }>;  
+  messages: Array<IMessageResult>;
+
   /** 当前开发版本号 */
   currentDevVersion: string;
   /** 项目标签 */
@@ -141,20 +135,57 @@ const projectSchema: Schema = new Schema({
       default: 'synced'
     }
   }],
-  chatHistory: [{
+  messages: [{
     messageId: { 
       type: mongoose.Schema.Types.ObjectId, 
       ref: 'Message' 
     },
     devVersion: String,
-    timestamp: Date,
     role: {
       type: String,
-      enum: ['user', 'assistant']
+      enum: ['user', 'assistant'],
+      required: true
     },
     content: String,
-    relatedFiles: [String],
-    preserved: Boolean
+    type: {
+      type: String,
+      enum: ['text', 'code', 'file', 'system'],
+      default: 'text'
+    },
+    sequence: Number,
+    status: {
+      type: String,
+      enum: ['pending', 'sent', 'error'],
+      default: 'pending'
+    },
+    codeSnippet: {
+      language: String,
+      code: String,
+      filePath: String,
+      lineStart: Number,
+      lineEnd: Number
+    },
+    relatedFiles: [{
+      fileId: String,
+      relativePath: String,
+      operation: {
+        type: String,
+        enum: ['create', 'update', 'delete']
+      }
+    }],
+    metadata: {
+      aiModel: String,
+      tokens: Number,
+      processingTime: Number
+    },
+    parentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Message'
+    },
+    preserved: {
+      type: Boolean,
+      default: false
+    }
   }],
   currentDevVersion: String,
   tags: [{

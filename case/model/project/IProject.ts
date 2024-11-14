@@ -1,7 +1,5 @@
-import { List } from "lodash";
-import { IProject } from "../../../models/projectModel";
 import mongoose from "mongoose";
-import { IMessageParam } from "../message/IMessage";
+import { IMessageResult } from "../message/IMessage";
 
 // API 响应结果接口，保证前端数据一致性，你也可以将类型发布到npm
 export interface IProjectResult {
@@ -24,7 +22,7 @@ export interface IProjectResult {
 
   // ===== 项目代码与对话 =====
   code: string;
-  messages?: IMessageParam[];
+  messages?: IMessageResult[];
   token: string;
 
   // ===== 路径管理 =====
@@ -95,7 +93,7 @@ export interface IProjectParam {
   owner: string | mongoose.Types.ObjectId;
   tags?: string[];
   status?: "development" | "completed";
-  messages?: IMessageParam[];
+  messages?: IMessageResult[];
 }
 
 export interface ProjectParam {
@@ -105,5 +103,5 @@ export interface ProjectParam {
   owner: string | mongoose.Types.ObjectId;
   tags?: string[];
   status?: "development" | "completed";
-  messages?: IMessageParam[];
+  messages?: IMessageResult[];
 }

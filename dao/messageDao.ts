@@ -14,17 +14,18 @@ class MessageDao {
    * @param param 消息创建参数
    * @returns 创建的消息结果
    */
-  async createMessage(param: IMessageParam): Promise<IMessageResult> {
+  async createMessage(projectId: string, param: IMessageParam): Promise<IMessageResult> {
     const session = await MessageModel.startSession();
     
     try {
       let result: IMessageResult;
       
       await session.withTransaction(async () => {
-        const latestSequence = await this.getLatestSequence(param.projectId, session);
+        const latestSequence = await this.getLatestSequence(projectId, session);
         
         const newMessage = new MessageModel({
           ...param,
+          projectId,
           sequence: latestSequence,
           status: 'pending'
         });
@@ -168,7 +169,7 @@ class MessageDao {
    */
   private convertToMessageResult(message: any): IMessageResult {
     return {
-      id: message._id.toString(),
+      messageId: message._id.toString(),
       projectId: message.projectId.toString(),
       devVersion: message.devVersion,
       role: message.role,
@@ -184,6 +185,23 @@ class MessageDao {
       parentId: message.parentId?.toString(),
       preserved: message.preserved
     };
+  }
+
+  /**
+   * 获取下一个消息序列号
+   */
+  async getNextSequence(
+    projectId: string | Types.ObjectId,
+    session: mongoose.ClientSession
+  ): Promise<number> {
+    const latestMessage = await MessageModel
+      .findOne({ projectId })
+      .sort({ sequence: -1 })
+      .select('sequence')
+      .session(session)
+      .exec();
+    
+    return (latestMessage?.sequence || 0) + 1;
   }
 }
 

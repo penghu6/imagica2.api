@@ -15,6 +15,8 @@ export interface IAiChatParam {
   }>;
   stream?: boolean;
   temperature?: number;
+  // 允许其他参数
+  [key:string]: any;
 }
 
 export interface IAiChatResult {

@@ -11,20 +11,21 @@ class AiChatService {
 
     async sendMessage(param: IAiChatParam, headers: any): Promise<IAiChatResult> {
         try {
-            const url = this.aiPrefix + "/be/openai/v1/chat/completions";
+            const url = 'http://openai-proxy.brain.loocaa.com/v1/chat/completions'
+            // const url = this.aiPrefix + "/be/openai/v1/chat/completions";
             // console.log(333, url)
-            const instance = axios.create({
-              httpsAgent: new https.Agent({  
-                rejectUnauthorized: false
-              })
-            });
-            const response = await instance.post(url, param, {
+            // const instance = axios.create({
+            //   httpsAgent: new https.Agent({  
+            //     rejectUnauthorized: false
+            //   })
+            // });
+            const response = await axios.post(url, param, {
                 headers: {
                     ...headers,
                     'Content-Type': 'application/json', // 确保设置正确的内容类型
+                    'Authorization': 'Bearer DlJYSkMVj1x4zoe8jZnjvxfHG6z5yGxK'
                 },
             });
-
             // 处理响应数据
             return response.data; // 假设返回的数据符合 IAiChatResult 的结构
         } catch (error: any) {
@@ -32,7 +33,6 @@ class AiChatService {
             throw new Error(`发送消息失败: ${error.message}`);
         }
     }
-
     
 }
 

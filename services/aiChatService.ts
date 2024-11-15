@@ -1,3 +1,4 @@
+import { Readable } from 'stream';
 import { IAiChatParam, IAiChatResult } from '../models/aiChatModel';
 import axios from 'axios';
 const https = require('https');
@@ -9,7 +10,7 @@ class AiChatService {
         this.aiPrefix = process.env.AI_PREFIX || ''; // 获取 AI_PREFIX 环境变量
     }
 
-    async sendMessage(param: IAiChatParam, headers: any): Promise<IAiChatResult> {
+    async sendMessage(param: IAiChatParam, headers: any): Promise<IAiChatResult | Readable> {
         try {
             const url = 'http://openai-proxy.brain.loocaa.com/v1/chat/completions'
             // const url = this.aiPrefix + "/be/openai/v1/chat/completions";
@@ -25,11 +26,10 @@ class AiChatService {
                     'Content-Type': 'application/json', // 确保设置正确的内容类型
                     'Authorization': 'Bearer DlJYSkMVj1x4zoe8jZnjvxfHG6z5yGxK'
                 },
+                responseType: param.stream ? 'stream' : 'json'
             });
-            // 处理响应数据
-            return response.data; // 假设返回的数据符合 IAiChatResult 的结构
+            return response.data; // 返回流
         } catch (error: any) {
-          // console.log(444, error)
             throw new Error(`发送消息失败: ${error.message}`);
         }
     }

@@ -88,8 +88,8 @@ class ProjectService {
       if (!project) {
         throw new Error('项目不存在');
       }
-      const developmentPath = project.path.development;
      
+      const developmentPath = project.paths.development;
       return await this.fileSystem.getProjectDevelopmentFiles( developmentPath);
     } catch (error: any) {
       throw new Error(`获取项目结构失败: ${error.message}`);
@@ -106,7 +106,7 @@ class ProjectService {
         throw new Error('项目不存在');
       }
       console.log("developmentPath", project);
-      const developmentPath = project.path.development;
+      const developmentPath = project.paths.development;
       return await this.fileSystem.getFileContent(developmentPath, filePath);
     } catch (error: any) {
       throw new Error(`获取文件内容失败: ${error.message}`);

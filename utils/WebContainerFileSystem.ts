@@ -65,7 +65,7 @@ export class WebContainerFileSystem {
           children
         });
       } else {
-        const content = await fs.readFile(fullPath, 'utf-8');
+        const content = await this.getFileContent(dirPath, entry.name)
         structure.push({
           name: entry.name,
           type: 'file',

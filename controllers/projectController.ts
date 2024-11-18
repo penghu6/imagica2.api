@@ -186,7 +186,7 @@ export class ProjectController extends BaseController {
      *                 data:
      *                   $ref: '#/components/schemas/IProjectResult'
      */
-    @Post('/detail')
+    @Get('/detail')
     async getProject(req: Request) {
         try {
             const projectId = req.query.projectId as string;

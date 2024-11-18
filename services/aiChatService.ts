@@ -24,9 +24,12 @@ class AiChatService {
                 headers: {
                     ...headers,
                     'Content-Type': 'application/json', // 确保设置正确的内容类型
-                    'Authorization': 'Bearer DlJYSkMVj1x4zoe8jZnjvxfHG6z5yGxK'
+                    'Authorization': 'Bearer DlJYSkMVj1x4zoe8jZnjvxfHG6z5yGxK',
+                    'Host': 'openai-proxy.brain.loocaa.com'
                 },
-                responseType: param.stream ? 'stream' : 'json'
+                responseType: param.stream ? 'stream' : 'json',
+                maxRedirects: 0,
+                proxy: false,
             });
             return response.data; // 返回流
         } catch (error: any) {

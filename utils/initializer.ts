@@ -90,7 +90,7 @@ export class Initializer {
 
   private static async startServer(app: Express): Promise<void> {
     const PORT = parseInt(process.env.PORT || '3000');
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`
 服务器器启动成功！
 - 本地访问: http://localhost:${PORT}
@@ -98,6 +98,8 @@ export class Initializer {
 - 环境模式: ${process.env.NODE_ENV}
       `);
     });
+    const serverTimeout = 300000; // 例如，设置为 5 分钟
+    server.setTimeout(serverTimeout); 
   }
 
   // private static initializeMiddlewares(app: Express): void {

@@ -16,11 +16,11 @@ import './db/init';
 const app = express();
 
 // 使用 CORS 中间件
-// app.use(cors({
-//   origin: '*', // 允许的源
-//   methods: ['GET', 'POST', 'PUT', 'DELETE'], // 允许的 HTTP 方法
-//   allowedHeaders: ['Content-Type', 'Authorization'], // 允许的请求头
-// }));
+app.use(cors({
+  origin: '*', // 允许的源
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // 允许的 HTTP 方法
+  allowedHeaders: ['Content-Type', 'Authorization'], // 允许的请求头
+}));
 
 setRouteConvention({
   controllerNamePattern: 'Controller',

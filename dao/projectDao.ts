@@ -236,9 +236,9 @@ class ProjectDao {
       messages: project.messages,
 
       // ===== 路径管理 =====
-      // paths: project.paths,
+      paths: project.paths,
       // ===== 文件管理 =====
-      // fileMapping: project.fileMapping,
+      fileMapping: project.fileMapping,
 
       // ===== 版本管理 =====
       devVersions: project.devVersions,

@@ -32,7 +32,35 @@ export class WebContainerFileSystem {
       this.validatePath(filePath);
       const fullPath = path.join(developmentPath, filePath);
       await this.validateFileAccess(fullPath);
-      return await fs.readFile(fullPath, 'utf-8');
+
+      // 获取文件扩展名
+      const extname = path.extname(fullPath).toLowerCase();
+      let mimeType = 'application/octet-stream'; // 默认类型
+
+      // 判断文件类型
+      const isImage = ['.jpg', '.jpeg', '.png', '.gif', '.ico'].includes(extname);
+
+      if (isImage) {
+        // 读取文件内容为二进制
+        const fileBuffer = await fs.readFile(fullPath);
+        // 将二进制数据转换为 Base64
+        const base64Data = fileBuffer.toString('base64');
+        // 根据文件类型设置 MIME 类型
+        if (extname === '.jpg' || extname === '.jpeg') {
+          mimeType = 'image/jpeg';
+        } else if (extname === '.png') {
+          mimeType = 'image/png';
+        } else if (extname === '.gif') {
+          mimeType = 'image/gif';
+        } else if (extname === '.ico') {
+          mimeType = 'image/x-icon';
+        }
+        // 返回 Base64 字符串，格式为 data URI
+        return `data:${mimeType};base64,${base64Data}`;
+      } else {
+        // 直接返回文件内容
+        return await fs.readFile(fullPath, 'utf-8');
+      }
     } catch (error: any) {
       throw new Error(`获取文件内容失败: ${error.message}`);
     }
@@ -65,10 +93,12 @@ export class WebContainerFileSystem {
           children
         });
       } else {
+        const content = await this.getFileContent(dirPath, entry.name)
         structure.push({
           name: entry.name,
           type: 'file',
-          path: relativePath
+          path: relativePath,
+          content
         });
       }
     }

@@ -3,4 +3,5 @@ export interface FileStructure {
   type: 'file' | 'directory';
   path: string;
   children?: FileStructure[];
+  content?: string;
 } 

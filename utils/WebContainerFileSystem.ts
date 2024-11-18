@@ -65,10 +65,12 @@ export class WebContainerFileSystem {
           children
         });
       } else {
+        const content = await fs.readFile(fullPath, 'utf-8');
         structure.push({
           name: entry.name,
           type: 'file',
-          path: relativePath
+          path: relativePath,
+          content
         });
       }
     }

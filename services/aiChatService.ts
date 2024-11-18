@@ -30,6 +30,14 @@ class AiChatService {
             });
             return response.data; // 返回流
         } catch (error: any) {
+            console.error('错误详情:', {
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                data: error.response?.data,
+                headers: error.response?.headers,
+                url: error.config?.url,
+                method: error.config?.method
+            });
             throw new Error(`发送消息失败: ${error.message}`);
         }
     }

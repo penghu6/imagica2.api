@@ -142,7 +142,7 @@ export class ProjectController extends BaseController {
      *                   items:
      *                     $ref: '#/components/schemas/IProjectResult'
      */
-    @Post('/user')
+    @Get('/user')
     async getUserProjects(req: Request) {
         try {
             const userId = req.body.userId;

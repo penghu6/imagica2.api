@@ -84,7 +84,7 @@ class ProjectService {
    */
   async getProjectStructure(userId: string, projectId: string): Promise<FileStructure[]> {
     try {
-      const project = await this.projectDao.findProjectById(projectId);
+      const project = await this.projectDao.findProjectById(projectId, true);
       if (!project) {
         throw new Error('项目不存在');
       }
@@ -101,7 +101,7 @@ class ProjectService {
    */
   async getFileContent(userId: string, projectId: string, filePath: string): Promise<string> {
     try {
-      const project = await this.projectDao.findProjectById(projectId);
+      const project = await this.projectDao.findProjectById(projectId, true);
       if (!project) {
         throw new Error('项目不存在');
       }

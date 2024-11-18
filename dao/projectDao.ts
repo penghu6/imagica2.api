@@ -67,7 +67,7 @@ class ProjectDao {
       isAITyping: false,
     }).save();
 
-    const result = this.convertToProjectResult(project);
+    const result = this.convertToProjectResultExcludePaths(project);
 
     return result;
   }
@@ -84,7 +84,7 @@ class ProjectDao {
   /**
    * 根据ID查找项目
    */
-  async findProjectById(projectId: string): Promise<IProjectResult | null> {
+  async findProjectById(projectId: string, needPath: boolean = false): Promise<IProjectResult | null> {
     const project = await ProjectModel.findById(projectId)
       .populate("owner")
       .exec();
@@ -92,7 +92,7 @@ class ProjectDao {
     if (!project) return null;
 
     // 转换为 API 响应格式
-    const result = this.convertToProjectResult(project);
+    const result = needPath ? this.convertToProjectResult(project) : this.convertToProjectResultExcludePaths(project);
 
     return result;
   }
@@ -110,7 +110,7 @@ class ProjectDao {
 
     // 转换为 API 响应格式
     const results: IProjectResult[] = projects.map((project) =>
-      this.convertToProjectResult(project)
+      this.convertToProjectResultExcludePaths(project)
     );
 
     return results;
@@ -192,7 +192,7 @@ class ProjectDao {
     if (!project) return null;
 
     // 5. 转换为 API 响应格式
-    const result = this.convertToProjectResult(project);
+    const result = this.convertToProjectResultExcludePaths(project);
     return result;
   }
 
@@ -250,6 +250,13 @@ class ProjectDao {
       // ===== 发布管理 =====
       publishSettings: project.publishSettings,
     };
+  }
+
+  
+  private convertToProjectResultExcludePaths(project: IProject): IProjectResult {
+    const res = this.convertToProjectResult(project)
+    delete res.paths
+    return res
   }
 }
 

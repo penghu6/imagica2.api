@@ -10,11 +10,11 @@ dotenv.config();
 // 设置 strictQuery 选项
 mongoose.set('strictQuery', false);
 
-// 定义链接数据库字符串
-const dbURI = `mongodb://${process.env.DB_HOST}/${process.env.DB_NAME}`;
+// 定义链接数据库字符串，包含用户名和密码
+const dbURI = `mongodb://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}/${process.env.DB_NAME}`;
 
-if (!process.env.DB_HOST || !process.env.DB_NAME) {
-  console.error('请在 .env 文件中设置 DB_HOST 和 DB_NAME');
+if (!process.env.DB_HOST || !process.env.DB_NAME || !process.env.DB_USER || !process.env.DB_PASSWORD) {
+  console.error('请在 .env 文件中设置 DB_HOST, DB_NAME, DB_USER 和 DB_PASSWORD');
   process.exit(1);
 }
 

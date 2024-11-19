@@ -67,7 +67,7 @@ class ProjectDao {
       isAITyping: false,
     }).save();
 
-    const result = this.convertToProjectResultExcludePaths(project);
+    const result = this.convertToProjectResult(project);
 
     return result;
   }
@@ -82,9 +82,23 @@ class ProjectDao {
   }
 
   /**
+   * 根据ID查找项目，需要用path等，不直接返回
+   */
+  async findProjectByIdNoReturn(projectId: string): Promise<(IProject & 
+    {_id: Types.ObjectId;}) | null> {
+    const project = await ProjectModel.findById(projectId)
+      .populate("owner")
+      .exec();
+
+    if (!project) return null;
+
+    return project;
+  }
+
+  /**
    * 根据ID查找项目
    */
-  async findProjectById(projectId: string, needPath: boolean = false): Promise<IProjectResult | null> {
+  async findProjectById(projectId: string): Promise<IProjectResult | null> {
     const project = await ProjectModel.findById(projectId)
       .populate("owner")
       .exec();
@@ -92,7 +106,7 @@ class ProjectDao {
     if (!project) return null;
 
     // 转换为 API 响应格式
-    const result = needPath ? this.convertToProjectResult(project) : this.convertToProjectResultExcludePaths(project);
+    const result = this.convertToProjectResult(project);
 
     return result;
   }
@@ -110,7 +124,7 @@ class ProjectDao {
 
     // 转换为 API 响应格式
     const results: IProjectResult[] = projects.map((project) =>
-      this.convertToProjectResultExcludePaths(project)
+      this.convertToProjectResult(project)
     );
 
     return results;
@@ -192,7 +206,7 @@ class ProjectDao {
     if (!project) return null;
 
     // 5. 转换为 API 响应格式
-    const result = this.convertToProjectResultExcludePaths(project);
+    const result = this.convertToProjectResult(project);
     return result;
   }
 
@@ -236,9 +250,9 @@ class ProjectDao {
       messages: project.messages,
 
       // ===== 路径管理 =====
-      paths: project.paths,
+      // paths: project.paths,
       // ===== 文件管理 =====
-      fileMapping: project.fileMapping,
+      // fileMapping: project.fileMapping,
 
       // ===== 版本管理 =====
       devVersions: project.devVersions,
@@ -250,13 +264,6 @@ class ProjectDao {
       // ===== 发布管理 =====
       publishSettings: project.publishSettings,
     };
-  }
-
-  
-  private convertToProjectResultExcludePaths(project: IProject): IProjectResult {
-    const res = this.convertToProjectResult(project)
-    delete res.paths
-    return res
   }
 }
 

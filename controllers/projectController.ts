@@ -145,7 +145,7 @@ export class ProjectController extends BaseController {
     @Get('/user')
     async getUserProjects(req: Request) {
         try {
-            const userId = req.body.userId;
+            const userId = req.query.userId as string;
             const projects = await this.projectService.getUserProjects(userId);
             return formatResponse(0, '获取项目列表成功', projects);
         } catch (error: any) {

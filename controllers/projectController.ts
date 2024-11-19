@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Controller, Post, Get } from '../decorators/controller';
+import { Controller, Post, Get, Put } from '../decorators/controller';
 import ProjectService from '../services/projectService';
 import { formatResponse } from '../utils/tools';
 import { BaseController } from './baseController';
@@ -410,6 +410,26 @@ export class ProjectController extends BaseController {
             res.json(formatResponse(0, '获取成功', { content }));
         } catch (error: any) {
             res.status(500).json(formatResponse(-1, '获取文件内容失败', { error: error.message }));
+        }
+    }
+
+    /**
+     * 更新项目文件
+     */
+    @Put('/:projectId/updateFiles')
+    async updateProjectFiles(req: Request, res: Response) {
+        try {
+            const projectId = req.params.projectId;
+            const { data } = req.body; // 获取传入的数据
+
+            if (!data || !Array.isArray(data)) {
+                return res.status(400).json(formatResponse(-1, '数据格式不正确'));
+            }
+
+            await this.projectService.updateProjectFiles(projectId, data);
+            return formatResponse(0, '更新项目文件成功');
+        } catch (error: any) {
+            return res.status(500).json(formatResponse(-1, error.message));
         }
     }
 } 

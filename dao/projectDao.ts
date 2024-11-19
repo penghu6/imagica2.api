@@ -82,6 +82,20 @@ class ProjectDao {
   }
 
   /**
+   * 根据ID查找项目，需要用path等，不直接返回
+   */
+  async findProjectByIdNoReturn(projectId: string): Promise<(IProject & 
+    {_id: Types.ObjectId;}) | null> {
+    const project = await ProjectModel.findById(projectId)
+      .populate("owner")
+      .exec();
+
+    if (!project) return null;
+
+    return project;
+  }
+
+  /**
    * 根据ID查找项目
    */
   async findProjectById(projectId: string): Promise<IProjectResult | null> {
@@ -236,9 +250,9 @@ class ProjectDao {
       messages: project.messages,
 
       // ===== 路径管理 =====
-      paths: project.paths,
+      // paths: project.paths,
       // ===== 文件管理 =====
-      fileMapping: project.fileMapping,
+      // fileMapping: project.fileMapping,
 
       // ===== 版本管理 =====
       devVersions: project.devVersions,

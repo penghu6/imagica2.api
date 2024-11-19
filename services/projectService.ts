@@ -2,6 +2,7 @@ import ProjectDao from '../dao/projectDao';
 import { IProjectParam, IProjectResult } from '../case/model/project/IProject';
 import { WebContainerFileSystem } from '../utils/WebContainerFileSystem';
 import { FileStructure } from '../models/file';
+import { FileManager } from '../utils/FileManager';
 
 class ProjectService {
   private projectDao: ProjectDao;
@@ -39,6 +40,11 @@ class ProjectService {
    */
   async updateProject(projectId: string, param: Partial<IProjectParam>): Promise<IProjectResult | null> {
     try {
+      //fileMapping和paths
+      const oldProject = await this.projectDao.findProjectByIdNoReturn(projectId)
+      const paths= oldProject?.paths || {root:"", development:""}
+      const fileMapping = paths.development ? await FileManager.generateFileMapping(paths.development) : []
+      Object.assign(param, {paths, fileMapping})
       const project = await this.projectDao.updateProject(projectId, param);
       if (!project) {
         throw new Error('项目不存在');
@@ -84,7 +90,7 @@ class ProjectService {
    */
   async getProjectStructure(userId: string, projectId: string): Promise<FileStructure[]> {
     try {
-      const project = await this.projectDao.findProjectById(projectId);
+      const project = await this.projectDao.findProjectByIdNoReturn(projectId);
       if (!project) {
         throw new Error('项目不存在');
       }
@@ -101,7 +107,7 @@ class ProjectService {
    */
   async getFileContent(userId: string, projectId: string, filePath: string): Promise<string> {
     try {
-      const project = await this.projectDao.findProjectById(projectId);
+      const project = await this.projectDao.findProjectByIdNoReturn(projectId);
       if (!project) {
         throw new Error('项目不存在');
       }

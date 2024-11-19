@@ -44,6 +44,48 @@ class AiChatService {
             throw new Error(`发送消息失败: ${error.message}`);
         }
     }
+
+    async sendMessageNew(content: IAiChatParam["message"]["content"], headers: any): Promise<IAiChatResult | Readable> {
+        try {
+            const url = 'http://openai-proxy.brain.loocaa.com/v1/chat/completions'
+            const userMessage = {
+                role: "user",
+                content
+            }
+
+            const param = {
+                model: "gpt-4-vision-preview",
+                temperature: 0.7,
+                max_tokens: 4096,
+                messages: [
+                    //todo:历史聊天记录，
+                    userMessage
+                ]
+            }
+            const response = await axios.post(url, param, {
+                headers: {
+                    ...headers,
+                    'Content-Type': 'application/json', // 确保设置正确的内容类型
+                    'Authorization': 'Bearer DlJYSkMVj1x4zoe8jZnjvxfHG6z5yGxK',
+                    'Host': 'openai-proxy.brain.loocaa.com'
+                },
+                maxRedirects: 0,
+                proxy: false,
+            });
+            // todo: 处理聊天内容
+            return response.data;
+        } catch (error: any) {
+            console.error('错误详情:', {
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                data: error.response?.data,
+                headers: error.response?.headers,
+                url: error.config?.url,
+                method: error.config?.method
+            });
+            throw new Error(`发送消息失败: ${error.message}`);
+        }
+    }
     
 }
 

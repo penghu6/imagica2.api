@@ -1,6 +1,7 @@
 import path from 'path';
 import fs from 'fs-extra';
 import { FileStructure } from '../models/file';
+import { IProject } from '../models/projectModel';
 
 export class WebContainerFileSystem {
   private readonly basePath: string;
@@ -12,7 +13,6 @@ export class WebContainerFileSystem {
 
   async getProjectDevelopmentFiles(developmentPath: string): Promise<FileStructure[]> {
     try {
-      
       if (!await fs.pathExists(developmentPath)) {
         throw new Error('项目目录不存在');
       }
@@ -144,4 +144,29 @@ export class WebContainerFileSystem {
       throw new Error('文件不存在或无法访问');
     }
   }
+
+  async updateFiles(paths: IProject["paths"], data: FileStructure[]): Promise<void> {
+    const developmentPath = paths.development;
+
+    // 将获取到的数据写入 development 文件夹下
+    for (const file of data) {
+      const relativePath = file.path; // 相对路径
+      const fullPath = path.join(developmentPath, relativePath);
+
+      if (file.type === 'directory') {
+          // 创建文件夹
+          await fs.mkdir(fullPath, { recursive: true });
+
+          // 递归处理子文件夹和文件
+          if (file.children) {
+              await this.updateFiles(paths , file.children);
+          }
+      } else if (file.type === 'file') {
+          // 确保文件的父目录存在
+          await fs.mkdir(path.dirname(fullPath), { recursive: true });
+          // 写入文件内容
+          await fs.writeFile(fullPath, file.content || "");
+      }
+    }
+  } 
 } 

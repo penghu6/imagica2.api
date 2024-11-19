@@ -1,4 +1,5 @@
 import ProjectDao from '../dao/projectDao';
+import fs from 'fs-extra';
 import { IProjectParam, IProjectResult } from '../case/model/project/IProject';
 import { WebContainerFileSystem } from '../utils/WebContainerFileSystem';
 import { FileStructure } from '../models/file';
@@ -116,6 +117,31 @@ class ProjectService {
       return await this.fileSystem.getFileContent(developmentPath, filePath);
     } catch (error: any) {
       throw new Error(`获取文件内容失败: ${error.message}`);
+    }
+  }
+
+  /**
+   * 更新项目文件
+   */
+  async updateProjectFiles(projectId: string, data: FileStructure[]): Promise<void> {
+    try {
+      // 查找项目以获取路径信息
+      const oldProject = await this.projectDao.findProjectByIdNoReturn(projectId);
+      if (!oldProject) {
+        throw new Error('项目不存在');
+      }
+      if(!oldProject.paths || !oldProject.paths.root || !oldProject.paths.development) {
+        throw new Error('path不存在');
+      }
+
+      const paths = oldProject.paths
+      //删除已有代码
+      await fs.remove(paths.root);
+
+      // 调用文件系统更新文件
+      await this.fileSystem.updateFiles(paths, data);
+    } catch (error: any) {
+      throw new Error(`更新项目文件失败: ${error.message}`);
     }
   }
 }

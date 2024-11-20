@@ -12,16 +12,16 @@ export type IMessageParam = Pick<
  * 定义了返回给客户端的消息数据结构
  */
 export interface IMessageResult {
-  messageId: string;
+  // messageId: string;
   projectId: string;
-  devVersion: string;
+  devVersion?: string;
   role: "user" | "assistant";
   content: string;
   type: "text" | "code" | "file" | "system";
-  sequence: number;
+  // sequence: number;
   status: "pending" | "sent" | "error";
   createdAt: Date;
-  updatedAt: Date;
+  // updatedAt: Date;
 
   codeSnippet?: {
     language: string;

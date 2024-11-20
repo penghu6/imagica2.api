@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 import { FileManager } from "../utils/FileManager";
 import MessageDao from "./messageDao";
 import MessageModel from "../models/messageModel";
+import { IMessageResult } from "../case/model/message/IMessage";
 
 interface ProjectList {
   total: number;
@@ -144,47 +145,47 @@ class ProjectDao {
     }
 
     //2.删除当前项目所有消息
-    await this.messageDao.deleteNonPreservedMessages(
-      projectId,
-      existingProject.currentDevVersion
-    );
+    // await this.messageDao.deleteNonPreservedMessages(
+    //   projectId,
+    //   existingProject.currentDevVersion
+    // );
     
     //3. 更新项目消息
     if (updateData.messages) {
       existingProject.messages = [];
       for (const msg of updateData.messages) {
         // 获取序列号 (不使用session)
-        const sequence = await MessageModel
-          .findOne({ projectId })
-          .sort({ sequence: -1 })
-          .select('sequence')
-          .then(doc => (doc?.sequence || 0) + 1);
+        // const sequence = await MessageModel
+        //   .findOne({ projectId })
+        //   .sort({ sequence: -1 })
+        //   .select('sequence')
+        //   .then(doc => (doc?.sequence || 0) + 1);
         
         // 创建 Message 文档并保存
-        const message = await new MessageModel({
-          projectId,
-          devVersion: msg.devVersion || existingProject.currentDevVersion,
-          role: msg.role,
-          content: msg.content,
-          type: msg.type || 'text',
-          sequence,
-          status: 'pending',
-          preserved: false
-        }).save();
+        // const message = await new MessageModel({
+        //   projectId,
+        //   devVersion: msg.devVersion || existingProject.currentDevVersion,
+        //   role: msg.role,
+        //   content: msg.content,
+        //   type: msg.type || 'text',
+        //   sequence,
+        //   status: 'pending',
+        //   preserved: false
+        // }).save();
 
         // 将消息添加到项目中
         existingProject.messages.push({
-          messageId: message._id.toString(),
+          // messageId: message._id.toString(),
           projectId: projectId,
-          devVersion: message.devVersion,
-          role: message.role,
-          content: message.content,
-          type: message.type,
-          sequence: message.sequence,
-          status: message.status,
-          preserved: message.preserved,
-          createdAt: new Date(),
-          updatedAt: new Date()
+          devVersion: msg.devVersion  || existingProject.currentDevVersion,
+          role: msg.role,
+          content: msg.content,
+          type: msg.type || "text",
+          // sequence: sequence,
+          status: 'sent',
+          preserved: false,
+          createdAt: msg.createdAt,
+          // updatedAt: new Date()
         });
       }
     }
@@ -265,6 +266,63 @@ class ProjectDao {
       publishSettings: project.publishSettings,
     };
   }
+
+  /**
+   * 添加消息
+   */
+  async addProjectMessage(
+    projectId: string,
+    messages: Array<IMessageResult>
+  ): Promise<void | null> {
+    // 1. 验证项目是否存在
+    const existingProject = await ProjectModel.findById(projectId);
+    if (!existingProject) {
+      throw new Error('没有找到项目')
+    }
+    const allMessage = existingProject.messages || [];  
+    for (const msg of messages) {
+      // 将消息添加到项目中
+      allMessage.push({
+        projectId: projectId,
+        devVersion: msg.devVersion  || existingProject.currentDevVersion,
+        role: msg.role,
+        content: msg.content,
+        type: msg.type || "text",
+        // sequence: sequence,
+        status: 'sent',
+        preserved: false,
+        createdAt: msg.createdAt,
+      });
+    }
+
+    await ProjectModel.findByIdAndUpdate(
+      projectId,
+      { 
+        messages: allMessage
+      }
+    );
+  }
+
+  /**
+   * 根据项目ID获取消息列表
+   * @param projectId 项目ID
+   * @param page 页码（可选）
+   * @param pageSize 每页大小（可选）
+   * @returns 消息列表
+   */
+  async getMessagesByProjectId(projectId: string): Promise<IMessageResult[]> {
+    try {
+      // 获取消息列表，支持分页
+      const project = await ProjectModel.findById(projectId)
+      if(!project){
+        return []
+      }
+      return project.messages || []
+    } catch (error) {
+      throw new Error(`获取消息列表失败`);
+    }
+  }
+
 }
 
 export default ProjectDao;

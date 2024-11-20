@@ -48,10 +48,6 @@ class AiChatService {
     async sendMessageNew(content: IAiChatParam["message"]["content"], headers: any): Promise<IAiChatResult | Readable> {
         try {
             const url = 'http://openai-proxy.brain.loocaa.com/v1/chat/completions'
-            const userMessage = {
-                role: "user",
-                content
-            }
 
             const param = {
                 model: "gpt-4-vision-preview",
@@ -59,15 +55,24 @@ class AiChatService {
                 max_tokens: 4096,
                 messages: [
                     //todo:历史聊天记录，
-                    userMessage
-                ]
-            }
-            const response = await axios.post(url, param, {
+                    {
+                        role: "user",
+                        content: content
+                    }
+                ],
+                stream: false
+            };
+
+            const body = JSON.stringify(param);
+            const contentLength = Buffer.byteLength(body); // 计算请求体的字节长度
+
+            const response = await axios.post(url, body, {
                 headers: {
                     ...headers,
                     'Content-Type': 'application/json', // 确保设置正确的内容类型
                     'Authorization': 'Bearer DlJYSkMVj1x4zoe8jZnjvxfHG6z5yGxK',
-                    'Host': 'openai-proxy.brain.loocaa.com'
+                    'Host': 'openai-proxy.brain.loocaa.com',
+                    'Content-Length': contentLength.toString() // 设置 Content-Length
                 },
                 maxRedirects: 0,
                 proxy: false,

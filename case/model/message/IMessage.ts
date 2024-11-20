@@ -6,7 +6,19 @@ export type IMessageParam = Pick<
   IMessageResult,
   "devVersion" | "role" | "content" | "type"
 >;
+export enum MessageType {
+  "text" ="text",
+  "code" = "code",
+  "file" = "file", 
+  "system" = "system",
+  "originContent" = "originContent",
+  "handledContent" = "handledContent"
+}
 
+export enum MessageRole {
+  "user" = "user",
+  "assistant" = "assistant"
+}
 /**
  * 消息 API 响应结果接口
  * 定义了返回给客户端的消息数据结构
@@ -15,12 +27,18 @@ export interface IMessageResult {
   // messageId: string;
   projectId: string;
   devVersion?: string;
-  role: "user" | "assistant";
-  content: string;
-  type: "text" | "code" | "file" | "system";
+  role: MessageRole;
+  content: string | Array<{
+    type: string;
+    text?: string;
+    image_url?: {
+      url: string;
+    }
+  }>;
+  type: MessageType;
   // sequence: number;
-  status: "pending" | "sent" | "error";
-  createdAt: Date;
+  status?: "pending" | "sent" | "error";
+  createdAt: number;
   // updatedAt: Date;
 
   codeSnippet?: {
@@ -44,5 +62,5 @@ export interface IMessageResult {
   };
 
   parentId?: string;
-  preserved: boolean;
+  preserved?: boolean;
 }

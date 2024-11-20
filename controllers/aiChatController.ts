@@ -56,7 +56,7 @@ export class AiChatController extends BaseController{
     async sendMessageNew(req: Request, res: Response) {
         try {
             const headers = req.headers; // 获取请求头
-            const response = await this.aiChatService.sendMessageNew(req.body.content, headers); // 传递参数和请求头
+            const response = await this.aiChatService.sendMessageNew(req.body, headers); // 传递参数和请求头
 
             // 检查返回类型
             if (response instanceof Readable) {

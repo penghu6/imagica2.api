@@ -2,7 +2,7 @@ import { Readable } from 'stream';
 import { IAiChatParam, IAiChatResult } from '../models/aiChatModel';
 import axios from 'axios';
 import ProjectDao from '../dao/projectDao';
-import { IMessageResult, MessageRole, MessageType } from '../case/model/message/IMessage';
+import { IMessageResult, MessageRole, MessageType, needUpdateFilesType } from '../case/model/message/IMessage';
 import { FileManager } from '../utils/FileManager';
 const https = require('https');
 import fs from 'fs-extra';
@@ -55,9 +55,13 @@ class AiChatService {
         }
     }
 
+    async getPaths(projectId: string): Promise<{ root: string, development: string }> {
+      const project = await this.projectDao.findProjectByIdNoReturn(projectId);
+      return project?.paths || { root: "", development: "" };
+    }
+
     async getFileMapping(projectId: string): Promise<Array<{ path: string; content: string }>> {
-        const project = await this.projectDao.findProjectByIdNoReturn(projectId);
-        const paths = project?.paths || { root: "", development: "" };
+        const paths = await this.getPaths(projectId);
         const developmentPath = paths?.development;
         if (!developmentPath) return [];
         if (!await fs.pathExists(developmentPath)) {
@@ -81,7 +85,7 @@ class AiChatService {
         return files.filter(x => !!x) as Array<{ path: string; content: string }>; // 确保返回类型正确
     }
 
-    handleFileResult(result: string): Array<{ path: string; content: string }> | string {
+    handleFileResult(result: string): Array<needUpdateFilesType> | string {
       try {
         const startTag = '<CODE_START>';
         const endTag = '<CODE_END>';
@@ -100,8 +104,6 @@ class AiChatService {
         return result
       }
     }
-
-
 
     async sendMessageNew(data: {projectId:string, content: IAiChatParam["message"]["content"]}, headers: any): Promise<IAiChatResult | Readable> {
         try {
@@ -168,9 +170,25 @@ class AiChatService {
                 proxy: false,
             });
             const newMessage = response.data?.choices?.[0]?.message
+            let newHandleChat: IMessageResult = {
+              projectId,
+              role: newMessage.role,
+              content: newMessage.content,
+              type: MessageType["handledContent"],
+              createdAt: response.data.created * 1000,
+            }
             if(newMessage) {
                 const codeJson = this.handleFileResult(newMessage.content)
-                // console.log(444, codeJson)
+                let needUpdateFiles: needUpdateFilesType[] = []
+                let handledContent = newMessage.content
+                if (Array.isArray(codeJson) && codeJson.length > 0) {
+                  const paths = await this.getPaths(projectId);
+                  if(paths.development) {
+                    await this.fileSystem.handleFileOperations(paths.development, codeJson);
+                    needUpdateFiles = codeJson as needUpdateFilesType[]
+                    handledContent = handledContent.replace(/<CODE_START>.*<CODE_END>/s, "")
+                  }
+                }
                 const userChat = {
                     projectId,
                     role: MessageRole['user'],
@@ -185,18 +203,33 @@ class AiChatService {
                     type: MessageType["originContent"],
                     createdAt: response.data.created * 1000
                 }
-                const newHandleChat = {
-                    projectId,
-                    role: newMessage.role,
-                    content: newMessage.content,
-                    type: MessageType["handledContent"],
-                    createdAt: response.data.created * 1000
-                }
+                newHandleChat = {
+                  projectId,
+                  role: newMessage.role,
+                  content: handledContent,
+                  type: MessageType["handledContent"],
+                  createdAt: response.data.created * 1000,
+                  metadata: {
+                    needUpdateFiles
+                  }
+                } as IMessageResult
                 this.projectDao.addProjectMessage(projectId, [userChat, newOriginChat, newHandleChat])
             }
-            
+            const newRes: IAiChatResult = {
+              ...response.data,
+              choices: [
+                {
+                  ...response.data?.choices?.[0] || {},
+                  message: {
+                    role: newMessage.role,
+                    content: newHandleChat.content || "",
+                    metadata: newHandleChat.metadata
+                  }
+                }
+              ]
+            }
             // todo: 处理聊天内容
-            return response.data;
+            return newRes;
         } catch (error: any) {
             console.error('错误详情:', {
                 status: error.response?.status,

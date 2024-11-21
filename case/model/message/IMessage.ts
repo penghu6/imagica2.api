@@ -19,6 +19,12 @@ export enum MessageRole {
   "user" = "user",
   "assistant" = "assistant"
 }
+
+export interface needUpdateFilesType {
+  path: string;
+  content: string;
+  type: "add" | "update" | "delete";
+}
 /**
  * 消息 API 响应结果接口
  * 定义了返回给客户端的消息数据结构
@@ -56,9 +62,10 @@ export interface IMessageResult {
   }>;
 
   metadata?: {
-    aiModel?: string;
-    tokens?: number;
-    processingTime?: number;
+    // aiModel?: string;
+    // tokens?: number;
+    // processingTime?: number;
+    needUpdateFiles?: Array<needUpdateFilesType>
   };
 
   parentId?: string;

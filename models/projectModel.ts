@@ -82,6 +82,8 @@ export interface IProject extends Document {
   createdAt: Date;
   /** 更新时间 */
   updatedAt: Date;
+  /** 项目版本 1，2 */
+  version: number;
 }
 
 /**
@@ -201,6 +203,10 @@ const projectSchema: Schema = new Schema({
   uiState: {
     type: Schema.Types.Mixed,
     default: {}
+  },
+  version: {
+    type: Number,
+    default: 1
   }
 }, {
   timestamps: true,  // 自动管理 createdAt 和 updatedAt

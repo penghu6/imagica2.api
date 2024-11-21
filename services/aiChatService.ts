@@ -3,15 +3,21 @@ import { IAiChatParam, IAiChatResult } from '../models/aiChatModel';
 import axios from 'axios';
 import ProjectDao from '../dao/projectDao';
 import { IMessageResult, MessageRole, MessageType } from '../case/model/message/IMessage';
+import { FileManager } from '../utils/FileManager';
 const https = require('https');
+import fs from 'fs-extra';
+import { WebContainerFileSystem } from '../utils/WebContainerFileSystem';
+import path from 'path';
 
 class AiChatService {
     private aiPrefix: string;
     private projectDao: ProjectDao
+    private fileSystem: WebContainerFileSystem
 
     constructor() {
         this.aiPrefix = process.env.AI_PREFIX || ''; // 获取 AI_PREFIX 环境变量
         this.projectDao = new ProjectDao()
+        this.fileSystem = new WebContainerFileSystem()
     }
 
     async sendMessage(param: IAiChatParam, headers: any): Promise<IAiChatResult | Readable> {
@@ -49,15 +55,54 @@ class AiChatService {
         }
     }
 
+    async getFileMapping(projectId: string): Promise<Array<{ path: string; content: string }>> {
+        const project = await this.projectDao.findProjectByIdNoReturn(projectId);
+        const paths = project?.paths || { root: "", development: "" };
+        const developmentPath = paths?.development;
+        if (!developmentPath) return [];
+        if (!await fs.pathExists(developmentPath)) {
+            return [];
+        }
+        const fileMapping = await FileManager.generateFileMapping(developmentPath);
+        
+        // 使用 Promise.all 等待所有文件内容的获取
+        const files = await Promise.all(fileMapping.map(async file => {
+            try {
+                const fileContent = await this.fileSystem.getFileContent(developmentPath, file.relativePath);
+                return {
+                    path: file.relativePath,
+                    content: fileContent
+                };
+            } catch (error) {
+                return undefined; // 处理错误时返回 undefined
+            }
+        }));
+
+        return files.filter(x => !!x) as Array<{ path: string; content: string }>; // 确保返回类型正确
+    }
+
     async sendMessageNew(data: {projectId:string, content: IAiChatParam["message"]["content"]}, headers: any): Promise<IAiChatResult | Readable> {
         try {
             const url = 'http://openai-proxy.brain.loocaa.com/v1/chat/completions'
             const {projectId, content} = data
-
+            // 提示词
             const assistantChat = {
                 role: "assistant",
                 content: "I will build in HTML and inline JavaScript and CSS."
             }
+            // 获取代码文件映射
+            const codes = await this.getFileMapping(projectId)
+            const codeChat = {
+                role: "system",
+                content: codes.map(file => {
+                    const ignorFile = [/package\-lock/, /node_modules/, /\.git/, /dockerfile/i, /\.jpg/, /\.jpeg/, /\.png/, /\.gif/, /\.ico/, /\.svg/, /build\//]
+                    if(file.path && !ignorFile.some(pattern => pattern.test(file.path))) {
+                        return `@Codebase\nPath: ${file.path}\nCode:\n${file.content}`
+                    }
+                    return ''
+                }).filter(Boolean).join('\n\n')
+            }
+            // 聊天记录
             let historyChat: IAiChatParam["message"] = []
             if(projectId) {
                 let historyMessage = await this.projectDao.getMessagesByProjectId(projectId)
@@ -76,6 +121,7 @@ class AiChatService {
                 max_tokens: 4096,
                 messages: [
                     assistantChat,
+                    codeChat,
                     ...historyChat,
                     {
                         role: "user",

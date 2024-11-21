@@ -233,7 +233,6 @@ class ProjectDao {
   }
 
   private convertToProjectResult(project: IProject): IProjectResult {
-    console.log('======', project);
     return {
       // ===== 项目基础信息 =====
       id: project._id.toString(),

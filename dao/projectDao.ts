@@ -263,6 +263,7 @@ class ProjectDao {
 
       // ===== 发布管理 =====
       publishSettings: project.publishSettings,
+      version: project.version,
     };
   }
 }

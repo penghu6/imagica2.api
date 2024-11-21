@@ -81,6 +81,28 @@ class AiChatService {
         return files.filter(x => !!x) as Array<{ path: string; content: string }>; // 确保返回类型正确
     }
 
+    handleFileResult(result: string): Array<{ path: string; content: string }> | string {
+      try {
+        const startTag = '<CODE_START>';
+        const endTag = '<CODE_END>';
+  
+        const startIndex = result.indexOf(startTag) + startTag.length;
+        const endIndex = result.indexOf(endTag);
+        
+        if (startIndex < startTag.length || endIndex === -1) {
+            throw new Error('Invalid format: Missing <CODE_START> or <CODE_END>');
+        }
+        
+        const jsonString = result.substring(startIndex, endIndex).trim();
+        return JSON.parse(jsonString);
+      } catch (error) {
+        //没能成功提取到代码修改，就返回原本的字符串
+        return result
+      }
+    }
+
+
+
     async sendMessageNew(data: {projectId:string, content: IAiChatParam["message"]["content"]}, headers: any): Promise<IAiChatResult | Readable> {
         try {
             const url = 'http://openai-proxy.brain.loocaa.com/v1/chat/completions'
@@ -88,7 +110,7 @@ class AiChatService {
             // 提示词
             const assistantChat = {
                 role: "assistant",
-                content: "I will build in HTML and inline JavaScript and CSS."
+                content: "对于用户的修改，请将代码文件的内容放入一个 JSON 数组中，每个元素包含 'path' 、 'content'和'type'，path为文件路径，content为该文件完整的内容, 'type'值为'add'、'update'、'delete',文件为新增使用'add', 文件为修改使用'update', 文件需要删除使用'delete'。文件JSON数组使用<CODE_START>和<CODE_END>作为开始和结束标签。代码内容后面加上当前的修改文本描述"
             }
             // 获取代码文件映射
             const codes = await this.getFileMapping(projectId)
@@ -147,6 +169,8 @@ class AiChatService {
             });
             const newMessage = response.data?.choices?.[0]?.message
             if(newMessage) {
+                const codeJson = this.handleFileResult(newMessage.content)
+                // console.log(444, codeJson)
                 const userChat = {
                     projectId,
                     role: MessageRole['user'],
@@ -181,7 +205,7 @@ class AiChatService {
                 headers: error.response?.headers,
                 url: error.config?.url,
                 method: error.config?.method
-            });
+            }, error);
             throw new Error(`发送消息失败: ${error.message}`);
         }
     }

@@ -49,6 +49,19 @@ class ProjectDao {
 
     // 使用 FileManager 初始化项目
     await FileManager.initializeProject(param.type, paths.development);
+     // 确定 runCommand 的内容
+    let runCommand: string[] = []
+    switch (param.type) {
+      case 'html':
+        runCommand = []
+        break;
+      case 'react':
+        runCommand = [
+          'npm install',
+          'npm run start', 
+        ]
+        break;
+    }
 
     // 创建项目记录
     const project = await new ProjectModel({
@@ -66,6 +79,7 @@ class ProjectDao {
       messages: [],
       currentDevVersion: "dev-1",
       isAITyping: false,
+      runCommand, // 添加 runCommand 字段
     }).save();
 
     const result = this.convertToProjectResult(project);
@@ -249,7 +263,7 @@ class ProjectDao {
       // ===== 项目代码与对话 =====
       code: (project as any).code,
       messages: FileManager.parseMessage(project.messages),
-
+      runCommand: project.runCommand,
       // ===== 路径管理 =====
       // paths: project.paths,
       // ===== 文件管理 =====

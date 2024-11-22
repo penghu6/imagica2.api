@@ -27,7 +27,8 @@ export interface IProject extends Document {
     root: string;           
     development: string;    
   };
-
+  /** 前端运行命令 */
+  runCommand: string[];
   /** 
    * 开发版本管理
    * version: 版本号，如 dev-1, dev-2
@@ -113,6 +114,10 @@ const projectSchema: Schema = new Schema({
   paths: {
     root: String,
     development: String
+  },
+  runCommand: { 
+    type: [String],
+    default: [] 
   },
   devVersions: [{
     version: String,

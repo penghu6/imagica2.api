@@ -169,4 +169,25 @@ export class WebContainerFileSystem {
       }
     }
   } 
+  //更新文件
+  async handleFileOperations(developmentPath: string, codeArray: Array<{ path: string; content: string; type: 'add' | 'update' | 'delete' }>): Promise<void> {
+    for (const file of codeArray) {
+      const { path: filePath, content, type } = file;
+      const fullPath = path.join(developmentPath, filePath); // 生成完整路径
+
+      switch (type) {
+          case 'delete':
+              await fs.remove(fullPath); // 删除文件
+              break;
+          case 'add':
+              await fs.outputFile(fullPath, content); // 新增文件
+              break;
+          case 'update':
+              await fs.outputFile(fullPath, content); // 替代当前文件
+              break;
+          default:
+              throw new Error(`Unsupported file operation type: ${type}`);
+      }
+    }
+}
 } 

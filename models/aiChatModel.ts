@@ -1,4 +1,5 @@
 import mongoose, { Document } from 'mongoose';
+import { needUpdateFilesType } from '../case/model/message/IMessage';
 
 export interface IAiChatParam {
   model: string;
@@ -29,6 +30,9 @@ export interface IAiChatResult {
     message: {
       role: string;
       content: string;
+      metadata?: {
+        needUpdateFiles?: Array<needUpdateFilesType>;
+      }
     }
     finish_reason?: string;
   }>;

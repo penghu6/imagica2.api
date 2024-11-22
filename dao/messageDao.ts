@@ -169,16 +169,16 @@ class MessageDao {
    */
   private convertToMessageResult(message: any): IMessageResult {
     return {
-      messageId: message._id.toString(),
+      // messageId: message._id.toString(),
       projectId: message.projectId.toString(),
       devVersion: message.devVersion,
       role: message.role,
       content: message.content,
       type: message.type,
-      sequence: message.sequence,
+      // sequence: message.sequence,
       status: message.status || 'pending',
       createdAt: message.createdAt,
-      updatedAt: message.updatedAt,
+      // updatedAt: message.updatedAt,
       codeSnippet: message.codeSnippet,
       relatedFiles: message.relatedFiles,
       metadata: message.metadata,

@@ -8,7 +8,6 @@ const https = require('https');
 import fs from 'fs-extra';
 import { WebContainerFileSystem } from '../utils/WebContainerFileSystem';
 import path from 'path';
-import { encodingForModel, TiktokenModel } from "js-tiktoken";
 
 class AiChatService {
     private aiPrefix: string;

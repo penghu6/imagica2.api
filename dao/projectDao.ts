@@ -195,7 +195,7 @@ class ProjectDao {
       projectId,
       { 
         ...updateData,
-        messages: existingProject.messages
+        messages: FileManager.stringifyMessage(existingProject.messages)
       },
       {
         new: true,
@@ -248,7 +248,7 @@ class ProjectDao {
 
       // ===== 项目代码与对话 =====
       code: (project as any).code,
-      messages: project.messages,
+      messages: FileManager.parseMessage(project.messages),
 
       // ===== 路径管理 =====
       // paths: project.paths,
@@ -295,11 +295,11 @@ class ProjectDao {
         createdAt: msg.createdAt,
       });
     }
-
+  
     await ProjectModel.findByIdAndUpdate(
       projectId,
       { 
-        messages: allMessage
+        messages: FileManager.stringifyMessage(allMessage)
       }
     );
   }
@@ -318,7 +318,7 @@ class ProjectDao {
       if(!project){
         return []
       }
-      return project.messages || []
+      return FileManager.parseMessage(project.messages || [])
     } catch (error) {
       throw new Error(`获取消息列表失败`);
     }

@@ -8,6 +8,7 @@ const https = require('https');
 import fs from 'fs-extra';
 import { WebContainerFileSystem } from '../utils/WebContainerFileSystem';
 import path from 'path';
+import { encodingForModel, TiktokenModel } from "js-tiktoken";
 
 class AiChatService {
     private aiPrefix: string;
@@ -108,7 +109,8 @@ class AiChatService {
     async sendMessageNew(data: {projectId:string, content: IAiChatParam["message"]["content"]}, headers: any): Promise<IAiChatResult | Readable> {
         try {
             const url = 'http://openai-proxy.brain.loocaa.com/v1/chat/completions'
-            const {projectId, content} = data
+            const model = "gpt-4-vision-preview"
+            const {projectId, content: userContent} = data
             // 提示词
             const assistantChat = {
                 role: "assistant",
@@ -130,8 +132,8 @@ class AiChatService {
             let historyChat: IAiChatParam["message"] = []
             if(projectId) {
                 let historyMessage = await this.projectDao.getMessagesByProjectId(projectId)
-                historyMessage = historyMessage.filter(x => x.type !== "handledContent")
-                historyChat = historyMessage.map(x => {
+                historyMessage = historyMessage.filter(x => x.type !== "handledContent" && !!x.content)
+                historyChat = historyMessage.slice(-5).map(x => {
                     return {
                         role: x.role,
                         content: x.content
@@ -140,7 +142,7 @@ class AiChatService {
             }
             
             const param = {
-                model: "gpt-4-vision-preview",
+                model,
                 temperature: 0.7,
                 max_tokens: 4096,
                 messages: [
@@ -149,15 +151,14 @@ class AiChatService {
                     ...historyChat,
                     {
                         role: "user",
-                        content: content
+                        content: userContent
                     }
                 ],
                 stream: false
             };
-
             const body = JSON.stringify(param);
             const contentLength = Buffer.byteLength(body); // 计算请求体的字节长度
-
+            
             const response = await axios.post(url, body, {
                 headers: {
                     ...headers,
@@ -172,8 +173,8 @@ class AiChatService {
             const newMessage = response.data?.choices?.[0]?.message
             let newHandleChat: IMessageResult = {
               projectId,
-              role: newMessage.role,
-              content: newMessage.content,
+              role: newMessage?.role || "user",
+              content: newMessage?.content || "",
               type: MessageType["handledContent"],
               createdAt: response.data.created * 1000,
             }
@@ -192,7 +193,7 @@ class AiChatService {
                 const userChat = {
                     projectId,
                     role: MessageRole['user'],
-                    content,
+                    content: userContent,
                     type: MessageType['text'],
                     createdAt: Number(new Date())
                 }
@@ -213,6 +214,7 @@ class AiChatService {
                     needUpdateFiles
                   }
                 } as IMessageResult
+
                 this.projectDao.addProjectMessage(projectId, [userChat, newOriginChat, newHandleChat])
             }
             const newRes: IAiChatResult = {
@@ -231,14 +233,7 @@ class AiChatService {
             // todo: 处理聊天内容
             return newRes;
         } catch (error: any) {
-            console.error('错误详情:', {
-                status: error.response?.status,
-                statusText: error.response?.statusText,
-                data: error.response?.data,
-                headers: error.response?.headers,
-                url: error.config?.url,
-                method: error.config?.method
-            }, error);
+            console.error('错误详情:',  error.response.data.error);
             throw new Error(`发送消息失败: ${error.message}`);
         }
     }

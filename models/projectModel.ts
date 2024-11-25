@@ -144,8 +144,7 @@ const projectSchema: Schema = new Schema({
   }],
   messages: [{
     messageId: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: 'Message' 
+      type: String,
     },
     devVersion: String,
     role: {
@@ -192,6 +191,9 @@ const projectSchema: Schema = new Schema({
     preserved: {
       type: Boolean,
       default: false
+    },
+    createdAt: {
+      type: Number
     }
   }],
   currentDevVersion: String,

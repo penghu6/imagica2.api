@@ -170,7 +170,7 @@ export class WebContainerFileSystem {
     }
   } 
   //更新文件
-  async handleFileOperations(developmentPath: string, codeArray: Array<{ path: string; content: string; type: 'add' | 'update' | 'delete' }>): Promise<void> {
+  async handleFileOperations(developmentPath: string, messageId:string, codeArray: Array<{ path: string; content: string; type: 'add' | 'update' | 'delete' }>): Promise<void> {
     for (const file of codeArray) {
       const { path: filePath, content, type } = file;
       const fullPath = path.join(developmentPath, filePath); // 生成完整路径
@@ -189,5 +189,7 @@ export class WebContainerFileSystem {
               throw new Error(`Unsupported file operation type: ${type}`);
       }
     }
-}
+    const msgVersionPath = path.join(developmentPath.replace('development', ""), messageId)
+    await fs.copy(developmentPath, msgVersionPath);
+  }
 } 

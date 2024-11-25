@@ -30,7 +30,7 @@ export interface needUpdateFilesType {
  * 定义了返回给客户端的消息数据结构
  */
 export interface IMessageResult {
-  // messageId: string;
+  messageId?: string;
   projectId: string;
   devVersion?: string;
   role: MessageRole;

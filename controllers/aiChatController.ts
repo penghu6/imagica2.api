@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
-import { Controller, Post } from '../decorators/controller';
+import { Controller, Post, Get } from '../decorators/controller';
 import AiChatService from '../services/aiChatService';
 import { formatResponse } from '../utils/tools';
 import { IAiChatParam } from '../models/aiChatModel';
 import { BaseController } from './baseController';
 import { Readable } from 'stream';
+import ProjectModel from '../models/projectModel';
 
 @Controller('aichat')
 export class AiChatController extends BaseController{
@@ -60,6 +61,22 @@ export class AiChatController extends BaseController{
 
             return formatResponse(0, '消息发送成功', response);
         } catch (error: any) {
+            return formatResponse(1, error.message);
+        }
+    }
+
+    @Get('/resetVersion')
+    async resetVersion(req: Request, res: Response) {
+        const { projectId, messageId } = req.query;
+
+        if (!projectId || !messageId) {
+            return res.status(400).json({ message: '缺少必要的参数: projectId 或 messageId' });
+        }
+        try {
+            const response = await this.aiChatService.resetCodeAndMsg(projectId as string, messageId as string);
+            return formatResponse(0, '回退版本成功', response);
+        } catch (error: any) {
+            console.error('错误:', error);
             return formatResponse(1, error.message);
         }
     }

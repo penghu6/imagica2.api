@@ -180,9 +180,10 @@ const projectSchema: Schema = new Schema({
       }
     }],
     metadata: {
-      aiModel: String,
-      tokens: Number,
-      processingTime: Number
+      needUpdateFiles: [{
+        path: { type: String, required: true }, // 文件路径
+        type: { type: String, enum: ['add', 'update', 'delete'], required: true } // 操作类型
+      }]
     },
     parentId: {
       type: mongoose.Schema.Types.ObjectId,

@@ -1,6 +1,6 @@
 export interface FileStructure {
   name: string;
-  type: 'file' | 'directory';
+  type: 'file' | 'folder';
   path: string;
   children?: FileStructure[];
   content?: string;

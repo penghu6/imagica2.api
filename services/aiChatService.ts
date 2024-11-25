@@ -8,6 +8,7 @@ const https = require('https');
 import fs from 'fs-extra';
 import { WebContainerFileSystem } from '../utils/WebContainerFileSystem';
 import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
 
 class AiChatService {
     private aiPrefix: string;
@@ -154,7 +155,10 @@ class AiChatService {
     
     private async handleResponseResult(response: any, projectId: string, userContent: string): Promise<IAiChatResult | Readable> {
         const newMessage = response.data?.choices?.[0]?.message;
+        const messageId = response.data?.id || uuidv4();
+        
         let newHandleChat: IMessageResult = {
+            messageId,
             projectId,
             role: newMessage?.role || "assistant",
             content: newMessage?.content || "",
@@ -170,13 +174,14 @@ class AiChatService {
             if (Array.isArray(codeJson) && codeJson.length > 0) {
                 const paths = await this.getPaths(projectId);
                 if (paths.development) {
-                    await this.fileSystem.handleFileOperations(paths.development, codeJson);
+                    await this.fileSystem.handleFileOperations(paths.development, messageId, codeJson);
                     needUpdateFiles = codeJson as needUpdateFilesType[];
                     handledContent = handledContent.replace(/<CODE_START>.*<CODE_END>/s, "");
                 }
             }
     
             const userChat = {
+                messageId,
                 projectId,
                 role: MessageRole['user'],
                 content: userContent,
@@ -185,6 +190,7 @@ class AiChatService {
             };
     
             const newOriginChat = {
+                messageId,
                 projectId,
                 role: newMessage.role,
                 content: newMessage.content,
@@ -193,6 +199,7 @@ class AiChatService {
             };
     
             newHandleChat = {
+                messageId,
                 projectId,
                 role: newMessage.role,
                 content: handledContent,
@@ -202,7 +209,7 @@ class AiChatService {
                     needUpdateFiles
                 }
             } as IMessageResult;
-    
+            
             this.projectDao.addProjectMessage(projectId, [userChat, newOriginChat, newHandleChat]);
         }
     

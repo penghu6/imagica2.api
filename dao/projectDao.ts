@@ -298,6 +298,7 @@ class ProjectDao {
     for (const msg of messages) {
       // 将消息添加到项目中
       allMessage.push({
+        messageId: msg?.messageId || "",
         projectId: projectId,
         devVersion: msg.devVersion  || existingProject.currentDevVersion,
         role: msg.role,
@@ -309,7 +310,6 @@ class ProjectDao {
         createdAt: msg.createdAt,
       });
     }
-  
     await ProjectModel.findByIdAndUpdate(
       projectId,
       { 

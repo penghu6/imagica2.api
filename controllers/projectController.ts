@@ -49,7 +49,7 @@ import { IProjectParam } from '../case/model/project/IProject';
  *           type: string
  *         type:
  *           type: string
- *           enum: [file, directory]
+ *           enum: [file, folder]
  *         path:
  *           type: string
  *         children:

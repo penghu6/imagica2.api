@@ -63,7 +63,7 @@ async function readDirLength(dir: string): Promise<string[]> {
   return new Promise((resolve, reject) => {
     fs.readdir(dir, (err, files) => {
       if (err) {
-        reject(new ValidationError('Failed to read directory'));
+        reject(new ValidationError('Failed to read folder'));
       }
       resolve(files);
     });

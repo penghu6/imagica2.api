@@ -19,7 +19,7 @@ export interface IFileMapping extends Document {
   relativePath: string;
   
   /** 文件类型 */
-  fileType: 'file' | 'directory';
+  fileType: 'file' | 'folder';
   
   /** 文件内容的哈希值 */
   hash: string;
@@ -71,7 +71,7 @@ const fileMappingSchema: Schema = new Schema({
   },
   fileType: {
     type: String,
-    enum: ['file', 'directory'],
+    enum: ['file', 'folder'],
     required: true
   },
   hash: {

@@ -9,8 +9,6 @@ import fs from 'fs-extra';
 import { WebContainerFileSystem } from '../utils/WebContainerFileSystem';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { replace } from 'lodash';
-
 class AiChatService {
     private aiPrefix: string;
     private projectDao: ProjectDao
@@ -255,6 +253,46 @@ class AiChatService {
         }
     }
 
+    async deleteAfterCodeAndMsg(projectId: string, messageId: string) {
+        try {
+            const project = await this.projectDao.findProjectByIdNoReturn(projectId);
+            const allMessages = project?.messages || []
+            // 查找最后一个 messageId 一致的 index
+            const lastIndex = allMessages.map(msg => msg.messageId).lastIndexOf(messageId);
+            if (lastIndex === -1) {
+                throw new Error('未找到匹配的消息');
+            }
+
+            // 获取该 index及之前的所有消息
+            const previousMessages = allMessages.slice(0, lastIndex +1);
+            // 重置消息
+            await this.projectDao.updateMessage(projectId, previousMessages)
+            const afterMessages = allMessages.slice(lastIndex + 1);
+            // 通过messageId查找代码，如果有则删除
+            if(!project?.paths?.development) {
+                throw new Error('项目未找到path');
+            }
+
+            // messageId去重
+            const messageIds = afterMessages.map(x => x.messageId)
+            const uniqueMessageIds = Array.from(new Set(messageIds)).filter(x => x) as string[];
+            // 删除之后的代码
+            return Promise.all(uniqueMessageIds.map(async (msgId: string) => {
+                 // 拼接完整路径
+                const versionPath = path.join(project.paths.development.replace('development', ''), msgId);
+                // 检查当前消息是否有保存代码
+                if (!await fs.pathExists(versionPath)) {
+                    return;
+                }
+                // 删除已有developmentPath
+                await fs.remove(versionPath);
+            }));
+            
+        } catch (error: any) {
+            throw new Error(`重置消息和删除code失败: ${error.message}`);
+        }
+    }
+
     async resetCodeAndMsg(projectId: string, messageId: string): Promise<void> {
         try {
             const project = await this.projectDao.findProjectByIdNoReturn(projectId);
@@ -266,7 +304,6 @@ class AiChatService {
             }
             const developmentPath = project.paths.development;
             const versionPath = path.join(developmentPath.replace('development', ''), messageId); // 拼接完整路径
-            // 检查当前消息是否有保存代码
             if (!await fs.pathExists(versionPath)) {
                 return;
             }
@@ -274,6 +311,7 @@ class AiChatService {
             await fs.remove(project.paths.development);
             // 复制模板到项目目录
             await fs.copy(versionPath, developmentPath);
+            await this.deleteAfterCodeAndMsg(projectId, messageId)
         } catch (error) {
             console.error('获取完整路径错误:', error);
             throw new Error('重置代码失败');

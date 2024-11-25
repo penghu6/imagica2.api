@@ -13,6 +13,10 @@ dotenv.config({ path: envFile });
 
 import './db/init';
 
+// 导入 projectService
+import ProjectService from './services/projectService';
+const projectService = new ProjectService();
+
 const app = express();
 
 // 使用 CORS 中间件
@@ -32,7 +36,7 @@ app.use(logger('dev'));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 app.use(cookieParser());
-// app.use(cors());
+app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 (async () => {

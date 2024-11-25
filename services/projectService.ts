@@ -4,6 +4,7 @@ import { IProjectParam, IProjectResult } from '../case/model/project/IProject';
 import { WebContainerFileSystem } from '../utils/WebContainerFileSystem';
 import { FileStructure } from '../models/file';
 import { FileManager } from '../utils/FileManager';
+import ProjectShareModel from '../models/projectShareModel';
 
 class ProjectService {
   private projectDao: ProjectDao;
@@ -32,7 +33,7 @@ class ProjectService {
     try {
       return await this.projectDao.findProjectsByUserId(userId);
     } catch (error: any) {
-      throw new Error(`获取用户项目列表失败: ${error.message}`);
+      throw new Error(`获取用户项目表失败: ${error.message}`);
     }
   }
 
@@ -116,7 +117,7 @@ class ProjectService {
       const developmentPath = project.paths.development;
       return await this.fileSystem.getFileContent(developmentPath, filePath);
     } catch (error: any) {
-      throw new Error(`获取文件内容失败: ${error.message}`);
+      throw new Error(`获取文件容失败: ${error.message}`);
     }
   }
 
@@ -144,6 +145,68 @@ class ProjectService {
       throw new Error(`更新项目文件失败: ${error.message}`);
     }
   }
+
+  /**
+   * 创建项目分享
+   */
+  async createProjectShare(projectId: string) {
+    const project = await this.findProjectById(projectId);
+    if (!project) {
+      throw new Error('项目不存在');
+    }
+
+    const share = await new ProjectShareModel({
+      projectId: project.id,
+      isActive: true
+    }).save();
+
+    return share;
+  }
+
+  /**
+   * 获取用户分享的项目列表
+   */
+  async getSharedProjects(projectId: string) {
+    // 查找项目的所有有效分享记录
+    const shares = await ProjectShareModel.find({
+      projectId,
+      isActive: true
+    }).populate('projectId');
+
+    return shares;
+  }
+
+  /**
+   * 删除项目分享
+   */
+  async deleteProjectShare(shareId: string) {
+    const share = await ProjectShareModel.findById(shareId);
+
+    if (!share) {
+      throw new Error('分享记录不存在');
+    }
+
+    share.isActive = false;
+    await share.save();
+
+    return true;
+  }
+
+  /**
+   * 获取分享的项目信息（供访问者查看）
+   */
+  async getSharedProject(shareId: string) {
+    const share = await ProjectShareModel.findOne({
+      _id: shareId,
+      isActive: true
+    }).populate('projectId');
+
+    if (!share) {
+      throw new Error('分享的项目不存在或已被取消分享');
+    }
+
+    return await this.findProjectById(share.projectId.toString());
+  }
 }
 
-export default ProjectService; 
+export default ProjectService;

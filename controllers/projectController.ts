@@ -56,6 +56,29 @@ import { IProjectParam } from '../case/model/project/IProject';
  *           type: array
  *           items:
  *             $ref: '#/components/schemas/FileStructure'
+ *     ProjectShare:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *           description: 分享记录ID
+ *         projectId:
+ *           type: string
+ *           description: 项目ID
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: 创建时间
+ *         isActive:
+ *           type: boolean
+ *           description: 是否有效
+ *     ProjectShareWithProject:
+ *       allOf:
+ *         - $ref: '#/components/schemas/ProjectShare'
+ *         - type: object
+ *           properties:
+ *             project:
+ *               $ref: '#/components/schemas/IProjectResult'
  */
 
 @Controller('projects')
@@ -430,6 +453,194 @@ export class ProjectController extends BaseController {
             return formatResponse(0, '更新项目文件成功');
         } catch (error: any) {
             return res.status(500).json(formatResponse(-1, error.message));
+        }
+    }
+
+    /**
+     * @swagger
+     * /api/projects/{projectId}/share:
+     *   post:
+     *     summary: 创建项目分享
+     *     description: 创建一个项目的分享链接，任何人都可以通过该链接查看项目
+     *     tags: [Projects]
+     *     parameters:
+     *       - in: path
+     *         name: projectId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: 项目ID
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               userId:
+     *                 type: string
+     *                 description: 当前用户ID
+     *     responses:
+     *       200:
+     *         description: 创建分享成功
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 code:
+     *                   type: number
+     *                   example: 0
+     *                 msg:
+     *                   type: string
+     *                   example: 创建分享成功
+     *                 data:
+     *                   $ref: '#/components/schemas/ProjectShare'
+     */
+    @Post('/:projectId/share')
+    async createShare(req: Request) {
+        try {
+            const share = await this.projectService.createProjectShare(
+                req.params.projectId
+            );
+            return formatResponse(0, '创建分享成功', share);
+        } catch (error: any) {
+            return formatResponse(1, error.message);
+        }
+    }
+
+    /**
+     * @swagger
+     * /api/projects/shared:
+     *   get:
+     *     summary: 获取用户分享的项目列表
+     *     description: 获取当前用户分享出去的所有项目列表
+     *     tags: [Projects]
+     *     parameters:
+     *       - in: query
+     *         name: userId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: 当前用户ID
+     *     responses:
+     *       200:
+     *         description: 获取成功
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 code:
+     *                   type: number
+     *                   example: 0
+     *                 msg:
+     *                   type: string
+     *                   example: 获取分享列表成功
+     *                 data:
+     *                   type: array
+     *                   items:
+     *                     $ref: '#/components/schemas/ProjectShareWithProject'
+     */
+    @Get('/shared')
+    async getSharedProjects(req: Request) {
+        try {
+            const shares = await this.projectService.getSharedProjects(req.query.userId as string);
+            return formatResponse(0, '获取分享列表成功', shares);
+        } catch (error: any) {
+            return formatResponse(1, error.message);
+        }
+    }
+
+    /**
+     * @swagger
+     * /api/projects/shared/{shareId}/delete:
+     *   post:
+     *     summary: 删除项目分享
+     *     description: 取消项目的分享，删除后他人将无法通过分享链接访问项目
+     *     tags: [Projects]
+     *     parameters:
+     *       - in: path
+     *         name: shareId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: 分享ID
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               userId:
+     *                 type: string
+     *                 description: 当前用户ID
+     *     responses:
+     *       200:
+     *         description: 删除成功
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 code:
+     *                   type: number
+     *                   example: 0
+     *                 msg:
+     *                   type: string
+     *                   example: 删除分享成功
+     */
+    @Post('/shared/:shareId/delete')
+    async deleteShare(req: Request) {
+        try {
+            await this.projectService.deleteProjectShare(
+                req.params.shareId
+            );
+            return formatResponse(0, '删除分享成功');
+        } catch (error: any) {
+            return formatResponse(1, error.message);
+        }
+    }
+
+    /**
+     * @swagger
+     * /api/projects/shared/{shareId}:
+     *   get:
+     *     summary: 获取分享的项目
+     *     description: 通过分享ID获取项目信息，任何人都可以访问
+     *     tags: [Projects]
+     *     parameters:
+     *       - in: path
+     *         name: shareId
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: 分享ID
+     *     responses:
+     *       200:
+     *         description: 获取成功
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 code:
+     *                   type: number
+     *                   example: 0
+     *                 msg:
+     *                   type: string
+     *                   example: 获取成功
+     *                 data:
+     *                   $ref: '#/components/schemas/IProjectResult'
+     */
+    @Get('/shared/:shareId')
+    async getSharedProject(req: Request) {
+        try {
+            const project = await this.projectService.getSharedProject(req.params.shareId);
+            return formatResponse(0, '获取成功', project);
+        } catch (error: any) {
+            return formatResponse(1, error.message);
         }
     }
 } 

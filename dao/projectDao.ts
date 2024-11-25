@@ -310,6 +310,10 @@ class ProjectDao {
         createdAt: msg.createdAt,
       });
     }
+    this.updateMessage(projectId, allMessage)
+  }
+
+  async updateMessage(projectId: string, allMessage:IMessageResult[]) {
     await ProjectModel.findByIdAndUpdate(
       projectId,
       { 

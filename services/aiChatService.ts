@@ -105,56 +105,127 @@ class AiChatService {
       }
     }
 
+    private async buildRequestParam(projectId: string, userContent: string, model: string, headers: any): Promise<IAiChatParam> {
+        const assistantChat = {
+            role: "assistant",
+            content: "对于用户的修改，请将代码文件的内容放入一个 JSON 数组中，每个元素包含 'path' 、 'content'和'type'，path为文件路径，content为该文件完整的内容, 'type'值为'add'、'update'、'delete',文件为新增使用'add', 文件为修改使用'update', 文件需要删除使用'delete'。文件JSON数组使用<CODE_START>和<CODE_END>作为开始和结束标签。代码内容后面加上当前的修改文本描述"
+        };
+    
+        // 获取代码文件映射
+        const codes = await this.getFileMapping(projectId);
+        const codeChat = {
+            role: "system",
+            content: codes.map(file => {
+                const ignorFile = [/package\-lock/, /node_modules/, /\.git/, /dockerfile/i, /\.jpg/, /\.jpeg/, /\.png/, /\.gif/, /\.ico/, /\.svg/, /build\//];
+                if (file.path && !ignorFile.some(pattern => pattern.test(file.path))) {
+                    return `@Codebase\nPath: ${file.path}\nCode:\n${file.content}`;
+                }
+                return '';
+            }).filter(Boolean).join('\n\n')
+        };
+    
+        // 聊天记录
+        let historyChat: IAiChatParam["message"] = [];
+        if (projectId) {
+            let historyMessage = await this.projectDao.getMessagesByProjectId(projectId);
+            historyMessage = historyMessage.filter(x => x.type !== "handledContent" && !!x.content);
+            historyChat = historyMessage.slice(-5).map(x => ({
+                role: x.role,
+                content: x.content
+            }));
+        }
+    
+        return {
+            model,
+            temperature: 0.7,
+            max_tokens: 4096,
+            messages: [
+                assistantChat,
+                codeChat,
+                ...historyChat,
+                {
+                    role: "user",
+                    content: userContent
+                }
+            ],
+            stream: false
+        };
+    }
+    
+    private async handleResponseResult(response: any, projectId: string, userContent: string): Promise<IAiChatResult | Readable> {
+        const newMessage = response.data?.choices?.[0]?.message;
+        let newHandleChat: IMessageResult = {
+            projectId,
+            role: newMessage?.role || "assistant",
+            content: newMessage?.content || "",
+            type: MessageType["handledContent"],
+            createdAt: response.data.created * 1000,
+        };
+    
+        if (newMessage) {
+            const codeJson = this.handleFileResult(newMessage.content);
+            let needUpdateFiles: needUpdateFilesType[] = [];
+            let handledContent = newMessage.content;
+    
+            if (Array.isArray(codeJson) && codeJson.length > 0) {
+                const paths = await this.getPaths(projectId);
+                if (paths.development) {
+                    await this.fileSystem.handleFileOperations(paths.development, codeJson);
+                    needUpdateFiles = codeJson as needUpdateFilesType[];
+                    handledContent = handledContent.replace(/<CODE_START>.*<CODE_END>/s, "");
+                }
+            }
+    
+            const userChat = {
+                projectId,
+                role: MessageRole['user'],
+                content: userContent,
+                type: MessageType['text'],
+                createdAt: Number(new Date())
+            };
+    
+            const newOriginChat = {
+                projectId,
+                role: newMessage.role,
+                content: newMessage.content,
+                type: MessageType["originContent"],
+                createdAt: response.data.created * 1000
+            };
+    
+            newHandleChat = {
+                projectId,
+                role: newMessage.role,
+                content: handledContent,
+                type: MessageType["handledContent"],
+                createdAt: response.data.created * 1000,
+                metadata: {
+                    needUpdateFiles
+                }
+            } as IMessageResult;
+    
+            this.projectDao.addProjectMessage(projectId, [userChat, newOriginChat, newHandleChat]);
+        }
+    
+        return {
+            ...response.data,
+            choices: [
+                {
+                    ...response.data?.choices?.[0] || {},
+                    message: {
+                        role: newMessage.role,
+                        content: newHandleChat.content || "",
+                        metadata: newHandleChat.metadata
+                    }
+                }
+            ]
+        };
+    }
     async sendMessageNew(data: {projectId:string, content: IAiChatParam["message"]["content"]}, headers: any): Promise<IAiChatResult | Readable> {
         try {
             const url = 'http://openai-proxy.brain.loocaa.com/v1/chat/completions'
             const model = "gpt-4-vision-preview"
-            const {projectId, content: userContent} = data
-            // 提示词
-            const assistantChat = {
-                role: "assistant",
-                content: "对于用户的修改，请将代码文件的内容放入一个 JSON 数组中，每个元素包含 'path' 、 'content'和'type'，path为文件路径，content为该文件完整的内容, 'type'值为'add'、'update'、'delete',文件为新增使用'add', 文件为修改使用'update', 文件需要删除使用'delete'。文件JSON数组使用<CODE_START>和<CODE_END>作为开始和结束标签。代码内容后面加上当前的修改文本描述"
-            }
-            // 获取代码文件映射
-            const codes = await this.getFileMapping(projectId)
-            const codeChat = {
-                role: "system",
-                content: codes.map(file => {
-                    const ignorFile = [/package\-lock/, /node_modules/, /\.git/, /dockerfile/i, /\.jpg/, /\.jpeg/, /\.png/, /\.gif/, /\.ico/, /\.svg/, /build\//]
-                    if(file.path && !ignorFile.some(pattern => pattern.test(file.path))) {
-                        return `@Codebase\nPath: ${file.path}\nCode:\n${file.content}`
-                    }
-                    return ''
-                }).filter(Boolean).join('\n\n')
-            }
-            // 聊天记录
-            let historyChat: IAiChatParam["message"] = []
-            if(projectId) {
-                let historyMessage = await this.projectDao.getMessagesByProjectId(projectId)
-                historyMessage = historyMessage.filter(x => x.type !== "handledContent" && !!x.content)
-                historyChat = historyMessage.slice(-5).map(x => {
-                    return {
-                        role: x.role,
-                        content: x.content
-                    }
-                })
-            }
-            
-            const param = {
-                model,
-                temperature: 0.7,
-                max_tokens: 4096,
-                messages: [
-                    assistantChat,
-                    codeChat,
-                    ...historyChat,
-                    {
-                        role: "user",
-                        content: userContent
-                    }
-                ],
-                stream: false
-            };
+            const param = await this.buildRequestParam(data.projectId, data.content, model, headers);
+
             const body = JSON.stringify(param);
             const contentLength = Buffer.byteLength(body); // 计算请求体的字节长度
             
@@ -169,68 +240,7 @@ class AiChatService {
                 maxRedirects: 0,
                 proxy: false,
             });
-            const newMessage = response.data?.choices?.[0]?.message
-            let newHandleChat: IMessageResult = {
-              projectId,
-              role: newMessage?.role || "user",
-              content: newMessage?.content || "",
-              type: MessageType["handledContent"],
-              createdAt: response.data.created * 1000,
-            }
-            if(newMessage) {
-                const codeJson = this.handleFileResult(newMessage.content)
-                let needUpdateFiles: needUpdateFilesType[] = []
-                let handledContent = newMessage.content
-                if (Array.isArray(codeJson) && codeJson.length > 0) {
-                  const paths = await this.getPaths(projectId);
-                  if(paths.development) {
-                    await this.fileSystem.handleFileOperations(paths.development, codeJson);
-                    needUpdateFiles = codeJson as needUpdateFilesType[]
-                    handledContent = handledContent.replace(/<CODE_START>.*<CODE_END>/s, "")
-                  }
-                }
-                const userChat = {
-                    projectId,
-                    role: MessageRole['user'],
-                    content: userContent,
-                    type: MessageType['text'],
-                    createdAt: Number(new Date())
-                }
-                const newOriginChat = {
-                    projectId,
-                    role: newMessage.role,
-                    content: newMessage.content,
-                    type: MessageType["originContent"],
-                    createdAt: response.data.created * 1000
-                }
-                newHandleChat = {
-                  projectId,
-                  role: newMessage.role,
-                  content: handledContent,
-                  type: MessageType["handledContent"],
-                  createdAt: response.data.created * 1000,
-                  metadata: {
-                    needUpdateFiles
-                  }
-                } as IMessageResult
-
-                this.projectDao.addProjectMessage(projectId, [userChat, newOriginChat, newHandleChat])
-            }
-            const newRes: IAiChatResult = {
-              ...response.data,
-              choices: [
-                {
-                  ...response.data?.choices?.[0] || {},
-                  message: {
-                    role: newMessage.role,
-                    content: newHandleChat.content || "",
-                    metadata: newHandleChat.metadata
-                  }
-                }
-              ]
-            }
-            // todo: 处理聊天内容
-            return newRes;
+            return this.handleResponseResult(response, data.projectId, data.content)
         } catch (error: any) {
             console.error('错误详情:',  error.response.data.error);
             throw new Error(`发送消息失败: ${error.message}`);

@@ -88,7 +88,7 @@ export class WebContainerFileSystem {
         const children = await this.getDirectoryStructure(fullPath, relativePath);
         structure.push({
           name: entry.name,
-          type: 'directory',
+          type: 'folder',
           path: relativePath,
           children
         });
@@ -153,7 +153,7 @@ export class WebContainerFileSystem {
       const relativePath = file.path; // 相对路径
       const fullPath = path.join(developmentPath, relativePath);
 
-      if (file.type === 'directory') {
+      if (file.type === 'folder') {
           // 创建文件夹
           await fs.mkdir(fullPath, { recursive: true });
 

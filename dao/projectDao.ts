@@ -308,6 +308,9 @@ class ProjectDao {
         status: 'sent',
         preserved: false,
         createdAt: msg.createdAt,
+        metadata: {
+          needUpdateFiles: msg?.metadata?.needUpdateFiles || []
+        }
       });
     }
     this.updateMessage(projectId, allMessage)

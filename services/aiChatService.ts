@@ -9,6 +9,7 @@ import fs from 'fs-extra';
 import { WebContainerFileSystem } from '../utils/WebContainerFileSystem';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { replace } from 'lodash';
 
 class AiChatService {
     private aiPrefix: string;
@@ -251,6 +252,31 @@ class AiChatService {
         } catch (error: any) {
             console.error('错误详情:',  error.response.data.error);
             throw new Error(`发送消息失败: ${error.message}`);
+        }
+    }
+
+    async resetCodeAndMsg(projectId: string, messageId: string): Promise<void> {
+        try {
+            const project = await this.projectDao.findProjectByIdNoReturn(projectId);
+            if (!project) {
+                throw new Error('项目未找到');
+            }
+            if(!project.paths?.development) {
+                throw new Error('项目未找到path');
+            }
+            const developmentPath = project.paths.development;
+            const versionPath = path.join(developmentPath.replace('development', ''), messageId); // 拼接完整路径
+            // 检查当前消息是否有保存代码
+            if (!await fs.pathExists(versionPath)) {
+                return;
+            }
+            // 删除已有developmentPath
+            await fs.remove(project.paths.development);
+            // 复制模板到项目目录
+            await fs.copy(versionPath, developmentPath);
+        } catch (error) {
+            console.error('获取完整路径错误:', error);
+            throw new Error('重置代码失败');
         }
     }
     

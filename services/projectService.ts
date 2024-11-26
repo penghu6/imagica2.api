@@ -4,6 +4,8 @@ import { IProjectParam, IProjectResult } from '../case/model/project/IProject';
 import { WebContainerFileSystem } from '../utils/WebContainerFileSystem';
 import { FileStructure } from '../models/file';
 import { FileManager } from '../utils/FileManager';
+import ProjectShareModel from '../models/projectShareModel';
+import { Types } from 'mongoose';
 
 class ProjectService {
   private projectDao: ProjectDao;
@@ -15,135 +17,205 @@ class ProjectService {
   }
 
   /**
-   * 创建新项目
+   * Create a new project
    */
   async createProject(param: IProjectParam): Promise<IProjectResult> {
     try {
       return await this.projectDao.createProject(param);
     } catch (error: any) {
-      throw new Error(`创建项目失败: ${error.message}`);
+      throw new Error(`Failed to create project: ${error.message}`);
     }
   }
 
   /**
-   * 获取用户的所有项目
+   * Get all projects of a user
    */
   async getUserProjects(userId: string): Promise<IProjectResult[]> {
     try {
       return await this.projectDao.findProjectsByUserId(userId);
     } catch (error: any) {
-      throw new Error(`获取用户项目列表失败: ${error.message}`);
+      throw new Error(`Failed to get user project list: ${error.message}`);
     }
   }
 
   /**
-   * 更新项目信息
+   * Update project information
    */
   async updateProject(projectId: string, param: Partial<IProjectParam>): Promise<IProjectResult | null> {
     try {
-      //fileMapping和paths
+      //fileMapping and paths
       const oldProject = await this.projectDao.findProjectByIdNoReturn(projectId)
       const paths= oldProject?.paths || {root:"", development:""}
       const fileMapping = paths.development ? await FileManager.generateFileMapping(paths.development) : []
       Object.assign(param, {paths, fileMapping})
       const project = await this.projectDao.updateProject(projectId, param);
       if (!project) {
-        throw new Error('项目不存在');
+        throw new Error('Project not found');
       }
       return project;
     } catch (error: any) {
-      throw new Error(`更新项目失败: ${error.message}`);
+      throw new Error(`Failed to update project: ${error.message}`);
     }
   }
 
   /**
-   * 删除项目
+   * Delete a project
    */
   async deleteProject(projectId: string): Promise<boolean> {
     try {
       const result = await this.projectDao.deleteProject(projectId);
       if (!result) {
-        throw new Error('项目不存在');
+        throw new Error('Project not found');
       }
       return true;
     } catch (error: any) {
-      throw new Error(`删除项目失败: ${error.message}`);
+      throw new Error(`Failed to delete project: ${error.message}`);
     }
   }
 
   /**
-   * 根据ID查找项目
+   * Find a project by ID
    */
   async findProjectById(projectId: string): Promise<IProjectResult | null> {
     try {
       const project = await this.projectDao.findProjectById(projectId);
       if (!project) {
-        throw new Error('项目不存在');
+        throw new Error('Project not found');
       }
       return project;
     } catch (error: any) {
-      throw new Error(`查找项目失败: ${error.message}`);
+      throw new Error(`Failed to find project: ${error.message}`);
     }
   }
 
   /**
-   * 获取项目文件结构
+   * Get project file structure
    */
   async getProjectStructure(userId: string, projectId: string): Promise<FileStructure[]> {
     try {
       const project = await this.projectDao.findProjectByIdNoReturn(projectId);
       if (!project) {
-        throw new Error('项目不存在');
+        throw new Error('Project not found');
       }
      
       const developmentPath = project.paths.development;
       return await this.fileSystem.getProjectDevelopmentFiles( developmentPath);
     } catch (error: any) {
-      throw new Error(`获取项目结构失败: ${error.message}`);
+      throw new Error(`Failed to get project structure: ${error.message}`);
     }
   }
 
   /**
-   * 获取文件内容
+   * Get file content
    */
   async getFileContent(userId: string, projectId: string, filePath: string): Promise<string> {
     try {
       const project = await this.projectDao.findProjectByIdNoReturn(projectId);
       if (!project) {
-        throw new Error('项目不存在');
+        throw new Error('Project not found');
       }
       console.log("developmentPath", project);
       const developmentPath = project.paths.development;
       return await this.fileSystem.getFileContent(developmentPath, filePath);
     } catch (error: any) {
-      throw new Error(`获取文件内容失败: ${error.message}`);
+      throw new Error(`Failed to get file content: ${error.message}`);
     }
   }
 
   /**
-   * 更新项目文件
+   * Update project files
    */
   async updateProjectFiles(projectId: string, data: FileStructure[]): Promise<void> {
     try {
-      // 查找项目以获取路径信息
+      // Find the project to get path information
       const oldProject = await this.projectDao.findProjectByIdNoReturn(projectId);
       if (!oldProject) {
-        throw new Error('项目不存在');
+        throw new Error('Project not found');
       }
       if(!oldProject.paths || !oldProject.paths.root || !oldProject.paths.development) {
-        throw new Error('path不存在');
+        throw new Error('path not found');
       }
 
       const paths = oldProject.paths
-      //删除已有代码
+      // Delete existing code
       await fs.remove(paths.root);
 
-      // 调用文件系统更新文件
+      // Update files using the file system
       await this.fileSystem.updateFiles(paths, data);
     } catch (error: any) {
-      throw new Error(`更新项目文件失败: ${error.message}`);
+      throw new Error(`Failed to update project files: ${error.message}`);
     }
+  }
+
+  /**
+   * Create project share
+   */
+  async createProjectShare(projectId: string) {
+    try {
+      // Validate projectId is a valid ObjectId
+      if (!Types.ObjectId.isValid(projectId)) {
+        throw new Error('Invalid project ID format');
+      }
+
+      const project = await this.findProjectById(projectId);
+      if (!project) {
+        throw new Error('Project not found');
+      }
+
+      const share = await new ProjectShareModel({
+        projectId: new Types.ObjectId(projectId),
+        isActive: true
+      }).save();
+
+      return share;
+    } catch (error: any) {
+      throw new Error(`Failed to create project share: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get shared project list for a user
+   */
+  async getSharedProjects(projectId: string) {
+    const shares = await ProjectShareModel.find({
+      projectId,
+      isActive: true
+    }).populate('projectId');
+
+    return shares;
+  }
+
+  /**
+   * Delete project share
+   */
+  async deleteProjectShare(shareId: string) {
+    const share = await ProjectShareModel.findById(shareId);
+
+    if (!share) {
+      throw new Error('Share record not found');
+    }
+
+    share.isActive = false;
+    await share.save();
+
+    return true;
+  }
+
+  /**
+   * Get shared project information (for visitors)
+   */
+  async getSharedProject(shareId: string) {
+    const share = await ProjectShareModel.findOne({
+      _id: shareId,
+      isActive: true
+    }).populate('projectId');
+
+    if (!share) {
+      throw new Error('Shared project not found or sharing has been cancelled');
+    }
+
+    return share.projectId;
   }
 }
 
-export default ProjectService; 
+export default ProjectService;

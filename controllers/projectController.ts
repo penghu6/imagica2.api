@@ -110,19 +110,16 @@ export class ProjectController extends BaseController {
     /**
      * @swagger
      * /api/projects/user:
-     *   post:
+     *   get:
      *     summary: 获取用户的所有项目
      *     tags: [Projects]
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
-     *             properties:
-     *               userId:
-     *                 type: string
-     *                 description: 用户ID
+     *     parameters:
+     *       - in: query
+     *         name: userId
+     *         required: true
+     *         description: 用户ID
+     *         schema:
+     *           type: string
      *     responses:
      *       200:
      *         description: 获取成功
@@ -140,12 +137,28 @@ export class ProjectController extends BaseController {
      *                 data:
      *                   type: array
      *                   items:
-     *                     $ref: '#/components/schemas/IProjectResult'
+     *                     $ref: '#/components/schemas/IProjectResult'  # 假设 IProjectResult 是项目的结构
+     *       400:
+     *         description: 请求参数错误
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 code:
+     *                   type: number
+     *                   example: 1
+     *                 msg:
+     *                   type: string
+     *                   example: 用户ID不能为空
      */
     @Get('/user')
     async getUserProjects(req: Request) {
         try {
-            const userId = req.query.userId as string;
+            const userId = req.query.userId as string; // 从查询参数中获取用户ID
+            if (!userId) {
+                return formatResponse(1, '用户ID不能为空');
+            }
             const projects = await this.projectService.getUserProjects(userId);
             return formatResponse(0, '获取项目列表成功', projects);
         } catch (error: any) {
@@ -156,19 +169,16 @@ export class ProjectController extends BaseController {
     /**
      * @swagger
      * /api/projects/detail:
-     *   post:
+     *   get:
      *     summary: 获取项目详情
      *     tags: [Projects]
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
-     *             properties:
-     *               projectId:
-     *                 type: string
-     *                 description: 项目ID
+     *     parameters:
+     *       - in: query
+     *         name: projectId
+     *         required: true
+     *         description: 项目ID
+     *         schema:
+     *           type: string
      *     responses:
      *       200:
      *         description: 获取成功
@@ -184,7 +194,33 @@ export class ProjectController extends BaseController {
      *                   type: string
      *                   example: 获取项目详情成功
      *                 data:
-     *                   $ref: '#/components/schemas/IProjectResult'
+     *                   $ref: '#/components/schemas/IProjectResult'  # 假设 IProjectResult 是项目详情的结构
+     *       400:
+     *         description: 请求参数错误
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 code:
+     *                   type: number
+     *                   example: 1
+     *                 msg:
+     *                   type: string
+     *                   example: 项目ID不能为空
+     *       404:
+     *         description: 项目未找到
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 code:
+     *                   type: number
+     *                   example: 1
+     *                 msg:
+     *                   type: string
+     *                   example: 项目未找到
      */
     @Get('/detail')
     async getProject(req: Request) {
@@ -414,7 +450,74 @@ export class ProjectController extends BaseController {
     }
 
     /**
-     * 更新项目文件
+     * @swagger
+     * /api/projects/{projectId}/updateFiles:
+     *   put:
+     *     summary: 更新项目文件
+     *     tags: [Projects]
+     *     parameters:
+     *       - in: path
+     *         name: projectId
+     *         required: true
+     *         description: 项目ID
+     *         schema:
+     *           type: string
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               data:
+     *                 type: array
+     *                 items:
+     *                   type: object
+     *                   properties:
+     *                     name:
+     *                       type: string
+     *                       description: 文件或目录的名称
+     *                     type:
+     *                       type: string
+     *                       enum: [file, directory]
+     *                       description: 文件或目录的类型
+     *                     path:
+     *                       type: string
+     *                       description: 文件或目录的路径
+     *                     content:
+     *                       type: string
+     *                       description: 文件内容（仅在类型为 file 时提供）
+     *                     children:
+     *                       type: array
+     *                       items:
+     *                         $ref: '#/components/schemas/FileStructure'  # 如果有子文件夹
+     *     responses:
+     *       200:
+     *         description: 更新成功
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 code:
+     *                   type: number
+     *                   example: 0
+     *                 message:
+     *                   type: string
+     *                   example: 更新项目文件成功
+     *       400:
+     *         description: 请求参数错误
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 code:
+     *                   type: number
+     *                   example: 1
+     *                 message:
+     *                   type: string
+     *                   example: 数据格式不正确
      */
     @Put('/:projectId/updateFiles')
     async updateProjectFiles(req: Request, res: Response) {

@@ -49,7 +49,7 @@ export class UploadController extends BaseController {
    * /api/upload:
    *   post:
    *     summary: 上传文件
-   *     description: 支持上传单个文件，大小限制为50MB
+   *     description: 支持上传.zip，大小限制为50MB
    *     tags: [Upload]
    *     consumes:
    *       - multipart/form-data
@@ -82,8 +82,8 @@ export class UploadController extends BaseController {
    *                   description: 提示信息
    *                 data:
    *                   type: string
-   *                   example: "/static/uploads/20240101120000/1234567890-file.jpg"
-   *                   description: 文件访问路径
+   *                   example: "/static/uploads/20240101120000"
+   *                   description: 压缩文件解压后的文件夹路径
    *       400:
    *         description: 上传失败
    *         content:

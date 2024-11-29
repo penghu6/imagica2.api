@@ -93,17 +93,25 @@ export class UploadController extends BaseController {
    */
   @Post('/')
   async uploadFile(req: Request, res: Response, next: NextFunction) {
-    this.uploader.single("file")(req, res, (err: any) => {
-      if (err instanceof multer.MulterError) {
-        next(new UploadError("上传文件失败，请检查文件的大小，控制在 50MB 以内"));
-      } else if (err) {
-        next(new UploadError("上传文件失败"));
-      } else {
-        const file = (req as MulterRequest).file;
-        const basePath = process.env.FILE_PATH || './public';
-        const accessPath = getAccessPath(file.path, basePath);
-        res.send(formatResponse(0, "", accessPath));
-      }
-    });
+    try {
+      const filePath = await new Promise<string>((resolve, reject) => {
+        this.uploader.single("file")(req, res, (err: any) => {
+          if (err instanceof multer.MulterError) {
+            reject(new UploadError("上传文件失败，请检查文件的大小，控制在 50MB 以内"));
+          } else if (err || !req || !(req as MulterRequest).file) {
+            reject(new UploadError("上传文件失败"));
+          } else{
+            const file = (req as MulterRequest).file;
+            const basePath = process.env.FILE_PATH || './public';
+            const accessPath = getAccessPath(file.path, basePath);
+            resolve(accessPath);
+          }
+        });
+      });
+
+      res.send(formatResponse(0, "", filePath));
+    } catch (error: any) {
+      return formatResponse(1, error.message);
+    }
   }
 }

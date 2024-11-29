@@ -6,6 +6,7 @@ import path from 'path';
 import { UploadError } from '../utils/errors';
 import { formatResponse } from '../utils/tools';
 import { createDatePath, ensureDir, getAccessPath } from '../utils/fileHelper';
+import UploadService from '../services/uploadService';
 
 interface MulterRequest extends Request {
   file: Express.Multer.File;
@@ -19,6 +20,12 @@ interface MulterRequest extends Request {
  */
 @Controller('upload')
 export class UploadController extends BaseController {
+  private uploadService: UploadService
+  constructor() {
+    super();
+    this.uploadService = new UploadService();
+}
+
   private uploader = multer({
     limits: {
       fileSize: 50 * 1024 * 1024
@@ -95,7 +102,7 @@ export class UploadController extends BaseController {
   async uploadFile(req: Request, res: Response, next: NextFunction) {
     try {
       const filePath = await new Promise<string>((resolve, reject) => {
-        this.uploader.single("file")(req, res, (err: any) => {
+        this.uploader.single("file")(req, res, async (err: any) => {
           if (err instanceof multer.MulterError) {
             reject(new UploadError("上传文件失败，请检查文件的大小，控制在 50MB 以内"));
           } else if (err || !req || !(req as MulterRequest).file) {
@@ -104,12 +111,18 @@ export class UploadController extends BaseController {
             const file = (req as MulterRequest).file;
             const basePath = process.env.FILE_PATH || './public';
             const accessPath = getAccessPath(file.path, basePath);
-            resolve(accessPath);
+            try {
+              await this.uploadService.unzipFiles(file.path)
+              resolve(accessPath);
+            } catch (error: any) {
+              res.status(400).send(formatResponse(1, error.message))
+            }
+            
           }
         });
       });
-
-      res.send(formatResponse(0, "", filePath));
+      const outputDir = path.dirname(filePath)
+      res.send(formatResponse(0, "", outputDir));
     } catch (error: any) {
       return formatResponse(1, error.message);
     }

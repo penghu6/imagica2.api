@@ -34,6 +34,7 @@
     "glob-promise": "^6.0.7",
     "http-errors": "~1.6.3",
     "jsonwebtoken": "^8.5.1",
+    "jszip": "^3.10.1",
     "md5": "^2.3.0",
     "mongoose": "^6.13.3",
     "morgan": "~1.9.1",

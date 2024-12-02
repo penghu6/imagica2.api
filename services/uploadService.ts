@@ -41,13 +41,12 @@ class UploadService {
                 }
             } else if (extname === '.rar') {
                 // 处理 RAR 文件
-                const buffer = fs.readFileSync(filePath);
-                const extractor = createExtractorFromData(buffer); // 使用 createExtractorFromData 创建解压缩器
+                const buf = Uint8Array.from(fs.readFileSync(filePath)).buffer
+                const extractor = await createExtractorFromData({ data: buf }); // 使用 createExtractorFromData 创建解压缩器
                 const list = extractor.getFileList(); // 获取文件列表
-
-                for (const fileHeader of list.fileHeaders) {
+                const fileHeaders = [...list.fileHeaders];
+                for (const fileHeader of fileHeaders) {
                     const filePathToWrite = path.join(outputDir, fileHeader.name);
-
                     // 检查文件是否是目录
                     if (fileHeader.flags.directory) {
                         // 如果是目录，创建目录
@@ -55,10 +54,10 @@ class UploadService {
                     } else {
                         // 如果是文件，提取文件内容
                         const extracted = extractor.extract({ files: [fileHeader.name] }); // 解压缩文件
-
+                        const files = [...extracted.files];
                         // 检查提取结果
-                        if (extracted.files.length > 0 && extracted.files[0].extraction) {
-                            const fileData = extracted.files[0].extraction; // 获取文件内容
+                        if (files.length > 0 && files[0].extraction) {
+                            const fileData = files[0].extraction; // 获取文件内容
                             fs.mkdirSync(path.dirname(filePathToWrite), { recursive: true }); // 确保文件所在目录存在
                             fs.writeFileSync(filePathToWrite, fileData); // 保存解压缩后的文件
                         } else {
@@ -74,7 +73,6 @@ class UploadService {
             fs.unlinkSync(filePath);
             console.log('解压缩完成，已删除压缩文件:', filePath);
         } catch (error: any) {
-            console.log(444, error)
             throw new Error('解压缩过程中发生错误: ' + error.message); // 直接抛出错误
         }
     }

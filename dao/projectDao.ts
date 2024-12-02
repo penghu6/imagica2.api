@@ -8,6 +8,7 @@ import { FileManager } from "../utils/FileManager";
 import MessageDao from "./messageDao";
 import MessageModel from "../models/messageModel";
 import { IMessageResult } from "../case/model/message/IMessage";
+import AiChatService from "../services/aiChatService";
 
 interface ProjectList {
   total: number;
@@ -16,7 +17,6 @@ interface ProjectList {
 
 class ProjectDao {
   private messageDao: MessageDao;
-
   constructor() {
     this.messageDao = new MessageDao();
   }
@@ -24,71 +24,10 @@ class ProjectDao {
   /**
    * 创建新项目
    */
-  async createProject(param: IProjectParam): Promise<IProjectResult> {
-    const projectId = new mongoose.Types.ObjectId();
-    const basePath = process.env.FILE_PATH || "bucket";
-
-    // 生成项目路径
-    const paths = {
-      root: path.join(
-        basePath,
-        "users",
-        param.owner.toString(),
-        "projects",
-        projectId.toString()
-      ),
-      development: path.join(
-        basePath,
-        "users",
-        param.owner.toString(),
-        "projects",
-        projectId.toString(),
-        "development"
-      ),
-    };
-
-     // 确定 runCommand 的内容
-     let runCommand: string[] = []
-     switch (param.type) {
-       case 'html':
-         runCommand = []
-         break;
-       case 'react':
-         runCommand = [
-           'npm install',
-           'npm run start', 
-         ]
-         break;
-     }
-
-    if(param.type === "upload"){
-      await FileManager.cpProjectCode(param.uploadPath, paths.development)
-    }else {
-      // 使用 FileManager 初始化项目
-      await FileManager.initializeProject(param.type, paths.development);
-    }
-    
+  async createProject(projectData: IProjectParam): Promise<IProjectResult> {
     // 创建项目记录
-    const project = await new ProjectModel({
-      _id: projectId,
-      ...param,
-      paths,
-      devVersions: [
-        {
-          version: "dev-1",
-          description: "初始版本",
-          createdAt: new Date(),
-        },
-      ],
-      fileMapping: await FileManager.generateFileMapping(paths.development),
-      messages: [],
-      currentDevVersion: "dev-1",
-      isAITyping: false,
-      runCommand, // 添加 runCommand 字段
-    }).save();
-
+    const project = await new ProjectModel(projectData).save();
     const result = this.convertToProjectResult(project);
-
     return result;
   }
 

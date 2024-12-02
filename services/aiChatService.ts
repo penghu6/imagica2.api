@@ -67,6 +67,11 @@ class AiChatService {
         if (!await fs.pathExists(developmentPath)) {
             return [];
         }
+        const res = await this.getFileContent(developmentPath)
+        return res
+    }
+
+    async getFileContent(developmentPath: string): Promise<Array<{ path: string; content: string }>> {
         const fileMapping = await FileManager.generateFileMapping(developmentPath);
         
         // 使用 Promise.all 等待所有文件内容的获取
@@ -315,6 +320,70 @@ class AiChatService {
         } catch (error) {
             console.error('获取完整路径错误:', error);
             throw new Error('重置代码失败');
+        }
+    }
+
+    private async getRunCommandRequestParam(pdevelopmentPath: string): Promise<IAiChatParam> {
+        const assistantChat = {
+            role: "assistant" as "assistant",
+            content: "你是一个全栈工程师，可以根据项目给出用户专业的建议"
+        };
+
+        const userChat = {
+            role: "user" as "user",
+            content: `分析整个项目的代码，给出运行该项目的命令，使用数组的格式返回，数组key值为runCommand， 包含的元素为命令字符串。比如'{"runCommand":["npm install","npm run start"]}'`
+        }
+    
+        // 获取代码文件映射
+        const codes = await this.getFileContent(pdevelopmentPath)
+        const codeChat = {
+            role: "system" as "system",
+            content: codes.map(file => {
+                const ignorFile = [/package\-lock/, /node_modules/, /\.git/, /dockerfile/i, /\.jpg/, /\.jpeg/, /\.png/, /\.gif/, /\.ico/, /\.svg/, /build\//];
+                if (file.path && !ignorFile.some(pattern => pattern.test(file.path))) {
+                    return `@Codebase\nPath: ${file.path}\nCode:\n${file.content}`;
+                }
+                return '';
+            }).filter(Boolean).join('\n\n')
+        };
+    
+
+        return {
+            model:"gpt-4-vision-preview",
+            temperature: 0.7,
+            max_tokens: 4096,
+            messages: [
+                assistantChat,
+                codeChat,
+                userChat
+            ],
+            stream: false
+        };
+    }
+
+    async getRunCommandWithAI(developmentPath: string): Promise<Array<string>> {
+        try {
+            const url = 'http://openai-proxy.brain.loocaa.com/v1/chat/completions'
+            const param = await this.getRunCommandRequestParam(developmentPath)
+            const body = JSON.stringify(param);
+            const contentLength = Buffer.byteLength(body); // 计算请求体的字节长度
+            console.log(77766, body)
+            const response = await axios.post(url, body, {
+                headers: {
+                    'Content-Type': 'application/json', // 确保设置正确的内容类型
+                    'Authorization': 'Bearer DlJYSkMVj1x4zoe8jZnjvxfHG6z5yGxK',
+                    'Host': 'openai-proxy.brain.loocaa.com',
+                    'Content-Length': contentLength.toString() // 设置 Content-Length
+                },
+                maxRedirects: 0,
+                proxy: false,
+            });
+            const message = response.data?.choices?.[0]?.message || ""
+            console.log(444, message)
+            return JSON.parse(message)
+        } catch (error: any) {
+            console.error('错误详情:',  error.response.data.error);
+            throw new Error(`获取初始化命令失败: ${error.message}`);
         }
     }
     

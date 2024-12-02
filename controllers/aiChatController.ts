@@ -7,6 +7,12 @@ import { BaseController } from './baseController';
 import { Readable } from 'stream';
 import ProjectModel from '../models/projectModel';
 
+/**
+ * @swagger
+ * tags:
+ *   name: AiChat
+ *   description: AI 聊天相关接口
+ */
 @Controller('aichat')
 export class AiChatController extends BaseController{
     private aiChatService: AiChatService;
@@ -16,6 +22,58 @@ export class AiChatController extends BaseController{
         this.aiChatService = new AiChatService();
     }
 
+    /**
+     * @swagger
+     * /aichat/send:
+     *   post:
+     *     summary: 发送消息
+     *     tags: [AiChat]
+     *     description: 发送用户消息并获取响应。请求体应包含模型信息和消息内容。
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               model:
+     *                 type: string
+     *                 description: 使用的模型名称，例如 "gpt-4-vision-preview"
+     *               messages:
+     *                 type: array
+     *                 items:
+     *                   type: object
+     *                   properties:
+     *                     role:
+     *                       type: string
+     *                       description: 消息角色（如 "user", "assistant", "system"）
+     *                     content:
+     *                       type: string
+     *                       description: 消息内容
+     *               max_tokens:
+     *                 type: integer
+     *                 description: 最大令牌数
+     *               temperature:
+     *                 type: number
+     *                 description: 温度设置，控制生成文本的随机性
+     *               stream:
+     *                 type: boolean
+     *                 description: 是否使用流式响应
+     *     responses:
+     *       200:
+     *         description: 返回消息响应
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 response:
+     *                   type: string
+     *       400:
+     *         description: 缺少必要的参数
+     *       500:
+     *         description: 服务器内部错误
+     */
     @Post('/send')
     async sendMessage(req: Request, res: Response) {
         try {
@@ -53,6 +111,41 @@ export class AiChatController extends BaseController{
         }
     }
 
+    /**
+     * @swagger
+     * /aichat/sendmessage:
+     *   post:
+     *     summary: 发送新消息
+     *     tags: [AiChat]
+     *     description: 发送新消息并获取响应。
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               projectId:
+     *                 type: string
+     *                 description: 项目的 ID
+     *               content:
+     *                 type: string
+     *                 description: 用户发送的新消息内容
+     *     responses:
+     *       200:
+     *         description: 返回消息响应
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 response:
+     *                   type: string
+     *       400:
+     *         description: 缺少必要的参数
+     *       500:
+     *         description: 服务器内部错误
+     */
     @Post('/sendmessage')
     async sendMessageNew(req: Request, res: Response) {
         try {
@@ -65,6 +158,43 @@ export class AiChatController extends BaseController{
         }
     }
 
+    /**
+     * @swagger
+     * /aichat/resetVersion:
+     *   get:
+     *     summary: 重置版本
+     *     tags: [AiChat]
+     *     description: 根据 projectId 和 messageId 重置项目的版本。
+     *     parameters:
+     *       - in: query
+     *         name: projectId
+     *         required: true
+     *         description: 项目的 ID
+     *         schema:
+     *           type: string
+     *       - in: query
+     *         name: messageId
+     *         required: true
+     *         description: 消息的 ID
+     *         schema:
+     *           type: string
+     *     responses:
+     *       200:
+     *         description: 返回完整路径
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 fullPath:
+     *                   type: string
+     *       400:
+     *         description: 缺少必要的参数
+     *       404:
+     *         description: 项目未找到
+     *       500:
+     *         description: 服务器内部错误
+     */
     @Get('/resetVersion')
     async resetVersion(req: Request, res: Response) {
         const { projectId, messageId } = req.query;

@@ -49,7 +49,7 @@ export class UploadController extends BaseController {
    * /api/upload:
    *   post:
    *     summary: 上传文件
-   *     description: 支持上传.zip，大小限制为50MB
+   *     description: 支持上传.zip | .rar，大小限制为50MB
    *     tags: [Upload]
    *     consumes:
    *       - multipart/form-data
@@ -105,7 +105,9 @@ export class UploadController extends BaseController {
         this.uploader.single("file")(req, res, async (err: any) => {
           if (err instanceof multer.MulterError) {
             reject(new UploadError("上传文件失败，请检查文件的大小，控制在 50MB 以内"));
-          } else if (err || !req || !(req as MulterRequest).file) {
+          } else if(!req || !(req as MulterRequest).file) {
+            reject(new UploadError("文件不能为空"));
+          } else if (err) {
             reject(new UploadError("上传文件失败"));
           } else{
             const file = (req as MulterRequest).file;

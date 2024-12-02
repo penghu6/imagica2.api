@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import glob from 'glob-promise';
 import mongoose from 'mongoose';
 import { IMessageResult } from '../case/model/message/IMessage';
+import { getRealPath } from './fileHelper';
 
 type ProjectType = 'react' | 'vue' | 'html' | 'nextjs';
 
@@ -86,6 +87,26 @@ export class FileManager {
   private static async initHtmlProject(path: string): Promise<void> {
     // 初始化 HTML 项目特定配置
     await fs.ensureFile(`${path}/index.html`);
+  }
+
+  static async cpProjectCode(uploadPath: string | undefined, developmentPath: string): Promise<void> {
+    if (!uploadPath) {
+      throw new Error("创建项目失败，没有文件路径");
+    }
+    const basePath = process.env.FILE_PATH || './public';
+    const realPath = getRealPath(uploadPath, basePath)
+    // 检查 uploadPath 是否存在
+    const uploadPathExists = await fs.pathExists(realPath);
+    if (!uploadPathExists) {
+        throw new Error(`上传路径不存在: ${uploadPath}`);
+    }
+
+    try {
+      // 使用 fs-extra 的 copy 方法直接复制整个目录
+      await fs.move(realPath, developmentPath, { overwrite: true });
+    } catch (error: any) {
+      throw new Error(`复制项目代码失败: ${error.message}`);
+    }
   }
 
   /**

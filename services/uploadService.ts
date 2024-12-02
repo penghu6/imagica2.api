@@ -61,7 +61,7 @@ class UploadService {
                             fs.mkdirSync(path.dirname(filePathToWrite), { recursive: true }); // 确保文件所在目录存在
                             fs.writeFileSync(filePathToWrite, fileData); // 保存解压缩后的文件
                         } else {
-                            console.error(`提取文件失败: ${fileHeader.name}`);
+                            throw new Error(`提取文件失败: ${fileHeader.name}`);
                         }
                     }
                 }

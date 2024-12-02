@@ -49,7 +49,7 @@ export class UploadController extends BaseController {
    * /api/upload:
    *   post:
    *     summary: 上传文件
-   *     description: 支持上传.zip，大小限制为50MB
+   *     description: 支持上传.zip | .rar，大小限制为50MB
    *     tags: [Upload]
    *     consumes:
    *       - multipart/form-data

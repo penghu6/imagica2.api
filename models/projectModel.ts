@@ -108,7 +108,7 @@ const projectSchema: Schema = new Schema({
   },
   type: {
     type: String,
-    enum: ['react', 'vue', 'html', 'nextjs'],
+    enum: ['react', 'vue', 'html', 'nextjs', 'upload'],
     required: true
   },
   paths: {

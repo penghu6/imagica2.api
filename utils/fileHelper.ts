@@ -36,7 +36,7 @@ export const getAccessPath = (filePath: string, basePath: string) => {
 };
 
 export const getRealPath = (filePath: string, basePath: string) => {
-  const relativePath = filePath.replace(/^\/statoc/, "")
+  const relativePath = filePath.replace(/^\/static/, "")
   const realPath = path.join(basePath, relativePath);
-  return relativePath.replace(/\\/g, '/');
+  return realPath.replace(/\\/g, '/');
 };

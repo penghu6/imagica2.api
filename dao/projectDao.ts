@@ -47,22 +47,27 @@ class ProjectDao {
       ),
     };
 
-    // 使用 FileManager 初始化项目
-    await FileManager.initializeProject(param.type, paths.development);
      // 确定 runCommand 的内容
-    let runCommand: string[] = []
-    switch (param.type) {
-      case 'html':
-        runCommand = []
-        break;
-      case 'react':
-        runCommand = [
-          'npm install',
-          'npm run start', 
-        ]
-        break;
-    }
+     let runCommand: string[] = []
+     switch (param.type) {
+       case 'html':
+         runCommand = []
+         break;
+       case 'react':
+         runCommand = [
+           'npm install',
+           'npm run start', 
+         ]
+         break;
+     }
 
+    if(param.type === "upload"){
+      await FileManager.cpProjectCode(param.uploadPath, paths.development)
+    }else {
+      // 使用 FileManager 初始化项目
+      await FileManager.initializeProject(param.type, paths.development);
+    }
+    
     // 创建项目记录
     const project = await new ProjectModel({
       _id: projectId,

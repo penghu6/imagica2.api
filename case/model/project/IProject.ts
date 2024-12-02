@@ -16,7 +16,7 @@ export interface IProjectResult {
   description: string;
   createdAt: string;
   updatedAt: string;
-  type: "react" | "vue" | "html" | "nextjs";
+  type: "react" | "vue" | "html" | "nextjs" | "upload";
   tags: string[];
   status: "development" | "completed";
 
@@ -89,17 +89,8 @@ export interface IProjectResult {
 export interface IProjectParam {
   name: string;
   description?: string;
-  type: "react" | "vue" | "html" | "nextjs";
-  owner: string | mongoose.Types.ObjectId;
-  tags?: string[];
-  status?: "development" | "completed";
-  messages?: IMessageResult[];
-}
-
-export interface ProjectParam {
-  name: string;
-  description?: string;
-  type: "react" | "vue" | "html" | "nextjs";
+  type: "react" | "vue" | "html" | "nextjs" | "upload";
+  uploadPath?: string;
   owner: string | mongoose.Types.ObjectId;
   tags?: string[];
   status?: "development" | "completed";

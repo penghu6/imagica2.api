@@ -45,7 +45,6 @@
     "svg-captcha": "^1.4.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "unrar": "^0.2.0",
     "uuid": "^11.0.3",
     "validate.js": "^0.13.1",
     "winston": "^3.16.0"

@@ -5,23 +5,90 @@ import { WebContainerFileSystem } from '../utils/WebContainerFileSystem';
 import { FileStructure } from '../models/file';
 import { FileManager } from '../utils/FileManager';
 import ProjectShareModel from '../models/projectShareModel';
-import { Types } from 'mongoose';
+import mongoose, { Types } from 'mongoose';
+import path from "path";
+import AiChatService from './aiChatService';
 
 class ProjectService {
   private projectDao: ProjectDao;
   private fileSystem: WebContainerFileSystem;
+  private aiChatService: AiChatService
 
   constructor() {
     this.projectDao = new ProjectDao();
     this.fileSystem = new WebContainerFileSystem();
+    this.aiChatService = new AiChatService();
   }
 
+  async handleProjectData(param: IProjectParam) {
+    const projectId = new mongoose.Types.ObjectId();
+    const basePath = process.env.FILE_PATH || "bucket";
+
+    // 生成项目路径
+    const paths = {
+      root: path.join(
+        basePath,
+        "users",
+        param.owner.toString(),
+        "projects",
+        projectId.toString()
+      ),
+      development: path.join(
+        basePath,
+        "users",
+        param.owner.toString(),
+        "projects",
+        projectId.toString(),
+        "development"
+      ),
+    };
+
+     // 确定 runCommand 的内容
+     let runCommand: string[] = []
+     switch (param.type) {
+       case 'html':
+         runCommand = []
+         break;
+       case 'react':
+         runCommand = [
+           'npm install',
+           'npm run start', 
+         ]
+         break;
+     }
+
+    if(param.type === "upload"){
+      await FileManager.cpProjectCode(param.uploadPath, paths.development)
+      runCommand = await this.aiChatService.getRunCommandWithAI(paths.development)
+    }else {
+      // 使用 FileManager 初始化项目
+      await FileManager.initializeProject(param.type, paths.development);
+    }
+    return {
+      _id: projectId,
+      ...param,
+      paths,
+      devVersions: [
+        {
+          version: "dev-1",
+          description: "初始版本",
+          createdAt: new Date(),
+        },
+      ],
+      fileMapping: await FileManager.generateFileMapping(paths.development),
+      messages: [],
+      currentDevVersion: "dev-1",
+      isAITyping: false,
+      runCommand, // 添加 runCommand 字段
+    }
+  }
   /**
    * Create a new project
    */
   async createProject(param: IProjectParam): Promise<IProjectResult> {
     try {
-      return await this.projectDao.createProject(param);
+      const projectData = await this.handleProjectData(param)
+      return await this.projectDao.createProject(projectData);
     } catch (error: any) {
       throw new Error(`Failed to create project: ${error.message}`);
     }

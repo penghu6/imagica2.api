@@ -326,14 +326,9 @@ class AiChatService {
     private async getRunCommandRequestParam(pdevelopmentPath: string): Promise<IAiChatParam> {
         const assistantChat = {
             role: "assistant" as "assistant",
-            content: "你是一个全栈工程师，可以根据项目代码给出用户专业的建议"
-        };
-
-        const userChat = {
-            role: "user" as "user",
             content: `根据整个项目的代码，给出运行该项目的命令，使用json字符串的格式返回，key值为runCommand， value为包含命令字符串的数组。比如
             '''
-            <COMMAND_START>'{"runCommand":["xxx"]}'<COMMAND_END>
+            <COMMAND_START>{"runCommand":["xxx"]}<COMMAND_END>
             '''
             <COMMAND_START>和<COMMAND_END>作为开始和结束标签
             不使用yarn
@@ -343,8 +338,8 @@ class AiChatService {
     
         // 获取代码文件映射
         const codes = await this.getFileContent(pdevelopmentPath)
-        const codeChat = {
-            role: "system" as "system",
+        const userChat = {
+            role: "user" as "user",
             content: codes.map(file => {
                 const ignorFile = [/package\-lock/, /node_modules/, /\.git/, /dockerfile/i, /\.jpg/, /\.jpeg/, /\.png/, /\.gif/, /\.ico/, /\.svg/, /build\//];
                 if (file.path && !ignorFile.some(pattern => pattern.test(file.path))) {
@@ -361,7 +356,6 @@ class AiChatService {
             max_tokens: 4096,
             messages: [
                 assistantChat,
-                codeChat,
                 userChat
             ],
             stream: false
@@ -384,10 +378,10 @@ class AiChatService {
                 maxRedirects: 0,
                 proxy: false,
             });
-            const message = response.data?.choices?.[0]?.message || "";
+            const message = response?.data?.choices?.[0]?.message || "";
             const runCommandMatch = message?.content?.match(/<COMMAND_START>(.*?)<COMMAND_END>/s);
             if (runCommandMatch && runCommandMatch[1]) {
-                const runCommandJson = JSON.parse(runCommandMatch[1]) || [];
+                const runCommandJson = JSON.parse(runCommandMatch[1]) || {};
                 const runCommandArr = runCommandJson.runCommand.map((x: any) => {
                     return x.replace(/-g\s/g, "")
                 })
@@ -395,7 +389,7 @@ class AiChatService {
             }
             return [];
         } catch (error: any) {
-            console.error('错误详情:',  error.response.data.error);
+            console.error('错误详情:',  error);
             return []
             // throw new Error(`获取初始化命令失败: ${error.message}`);
         }

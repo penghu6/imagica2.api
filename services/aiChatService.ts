@@ -385,7 +385,7 @@ class AiChatService {
                 proxy: false,
             });
             const message = response.data?.choices?.[0]?.message || "";
-            const runCommandMatch = message.content.match(/<COMMAND_START>(.*?)<COMMAND_END>/s);
+            const runCommandMatch = message?.content?.match(/<COMMAND_START>(.*?)<COMMAND_END>/s);
             if (runCommandMatch && runCommandMatch[1]) {
                 const runCommandJson = JSON.parse(runCommandMatch[1]) || [];
                 const runCommandArr = runCommandJson.runCommand.map((x: any) => {

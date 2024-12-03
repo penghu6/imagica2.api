@@ -326,19 +326,18 @@ class AiChatService {
     private async getRunCommandRequestParam(pdevelopmentPath: string): Promise<IAiChatParam> {
         const assistantChat = {
             role: "assistant" as "assistant",
-            content: "你是一个全栈工程师，可以根据项目给出用户专业的建议"
+            content: "你是一个全栈工程师，可以根据项目代码给出用户专业的建议"
         };
 
         const userChat = {
             role: "user" as "user",
-            content: `分析整个项目的代码，给出运行该项目的命令，使用json字符串的格式返回，key值为runCommand， value为包含命令字符串的数组。比如
+            content: `根据整个项目的代码，给出运行该项目的命令，使用json字符串的格式返回，key值为runCommand， value为包含命令字符串的数组。比如
             '''
-            <COMMAND_START>'{"runCommand":["npm install http-server","http-server"]}'<COMMAND_END>
+            <COMMAND_START>'{"runCommand":["xxx"]}'<COMMAND_END>
             '''
             <COMMAND_START>和<COMMAND_END>作为开始和结束标签
-            安装插件使用本地安装的方式
             不使用yarn
-            如果是html,使用http-server运行
+            如果是html,本地安装http-server，并使用http-server运行
             `
         }
     
@@ -388,8 +387,11 @@ class AiChatService {
             const message = response.data?.choices?.[0]?.message || "";
             const runCommandMatch = message.content.match(/<COMMAND_START>(.*?)<COMMAND_END>/s);
             if (runCommandMatch && runCommandMatch[1]) {
-                const runCommandJson = JSON.parse(runCommandMatch[1]);
-                return runCommandJson.runCommand || [];
+                const runCommandJson = JSON.parse(runCommandMatch[1]) || [];
+                const runCommandArr = runCommandJson.runCommand.map((x: any) => {
+                    return x.replace(/-g\s/g, "")
+                })
+                return runCommandArr;
             }
             return [];
         } catch (error: any) {

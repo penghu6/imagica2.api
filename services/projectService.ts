@@ -60,7 +60,6 @@ class ProjectService {
     if(param.type === "upload"){
       await FileManager.cpProjectCode(param.uploadPath, paths.development)
       runCommand = await this.aiChatService.getRunCommandWithAI(paths.development)
-      console.log(555, runCommand)
     }else {
       // 使用 FileManager 初始化项目
       await FileManager.initializeProject(param.type, paths.development);

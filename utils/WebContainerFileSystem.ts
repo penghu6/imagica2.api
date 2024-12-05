@@ -107,7 +107,6 @@ export class WebContainerFileSystem {
         });
       } else {
         const content = await this.getFileContent(dirPath, entry.name)
-        // console.log(777, entry.name, "***", content)
         structure.push({
           name: entry.name,
           type: 'file',

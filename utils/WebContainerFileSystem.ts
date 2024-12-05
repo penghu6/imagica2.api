@@ -2,6 +2,8 @@ import path from 'path';
 import fs from 'fs-extra';
 import { FileStructure } from '../models/file';
 import { IProject } from '../models/projectModel';
+import jschardet from 'jschardet';
+import iconv from 'iconv-lite';
 
 export class WebContainerFileSystem {
   private readonly basePath: string;
@@ -58,8 +60,19 @@ export class WebContainerFileSystem {
         // 返回 Base64 字符串，格式为 data URI
         return `data:${mimeType};base64,${base64Data}`;
       } else {
+        // 读取文件为 Buffer
+        const fileBuffer = await fs.readFile(fullPath);
+
+        // 检测文件编码
+        const detection = jschardet.detect(fileBuffer);
+        const encoding = detection.encoding || 'utf-8'; // 默认使用 utf-8
+
+        // 将 Buffer 转换为字符串
+        const content = iconv.decode(fileBuffer, encoding);
+
+        return content;
         // 直接返回文件内容
-        return await fs.readFile(fullPath, 'utf-8');
+        // return await fs.readFile(fullPath, 'utf-8');
       }
     } catch (error: any) {
       throw new Error(`获取文件内容失败: ${error.message}`);

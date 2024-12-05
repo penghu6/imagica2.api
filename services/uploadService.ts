@@ -2,6 +2,7 @@ import JSZip from 'jszip'; // 导入 JSZip
 import fs from 'fs';
 import path from 'path';
 import { createExtractorFromData } from 'node-unrar-js'; // 导入 createExtractorFromData
+import { ignorFile }from "../utils/consts"
 
 class UploadService {
     constructor() {}
@@ -26,6 +27,11 @@ class UploadService {
 
                 // 遍历 ZIP 文件中的每个文件
                 for (const fileName of Object.keys(zipContent.files)) {
+                    // 检查是否在忽略列表中
+                    if (ignorFile.some(pattern => pattern.test(fileName))) {
+                        continue; // 忽略该文件
+                    }
+
                     const file = zipContent.files[fileName];
 
                     // 检查文件是否是目录
@@ -46,6 +52,11 @@ class UploadService {
                 const list = extractor.getFileList(); // 获取文件列表
                 const fileHeaders = [...list.fileHeaders];
                 for (const fileHeader of fileHeaders) {
+                    // 检查是否在忽略列表中
+                    if (ignorFile.some(pattern => pattern.test(fileHeader.name))) {
+                        continue; // 忽略该文件
+                    }
+
                     const filePathToWrite = path.join(outputDir, fileHeader.name);
                     // 检查文件是否是目录
                     if (fileHeader.flags.directory) {

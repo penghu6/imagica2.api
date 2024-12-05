@@ -38,7 +38,7 @@ export interface IMessageResult {
     type: string;
     text?: string;
     image_url?: {
-      url: string;
+      url?: string;
     }
   }>;
   type: MessageType;

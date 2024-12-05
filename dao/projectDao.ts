@@ -238,10 +238,11 @@ class ProjectDao {
     if (!existingProject) {
       throw new Error('没有找到项目')
     }
-    const allMessage = existingProject.messages || [];  
+
+    const handleMsg: IMessageResult[]  = []
     for (const msg of messages) {
       // 将消息添加到项目中
-      allMessage.push({
+      handleMsg.push({
         messageId: msg?.messageId || "",
         projectId: projectId,
         devVersion: msg.devVersion  || existingProject.currentDevVersion,
@@ -257,6 +258,7 @@ class ProjectDao {
         }
       });
     }
+    const allMessage = [...existingProject.messages, ...handleMsg]
     this.updateMessage(projectId, allMessage)
   }
 

@@ -4,7 +4,6 @@ import { Types } from "mongoose";
 import path from "path";
 import fs from "fs-extra";
 import mongoose from "mongoose";
-import { FileManager } from "../utils/FileManager";
 import MessageDao from "./messageDao";
 import MessageModel from "../models/messageModel";
 import { IMessageResult } from "../case/model/message/IMessage";
@@ -153,7 +152,7 @@ class ProjectDao {
       projectId,
       { 
         ...updateData,
-        messages: FileManager.stringifyMessage(existingProject.messages)
+        messages: existingProject.messages
       },
       {
         new: true,
@@ -206,7 +205,7 @@ class ProjectDao {
 
       // ===== 项目代码与对话 =====
       code: (project as any).code,
-      messages: FileManager.parseMessage(project.messages),
+      messages: project.messages,
       runCommand: project.runCommand,
       // ===== 路径管理 =====
       // paths: project.paths,
@@ -266,7 +265,7 @@ class ProjectDao {
     await ProjectModel.findByIdAndUpdate(
       projectId,
       { 
-        messages: FileManager.stringifyMessage(allMessage)
+        messages: allMessage
       }
     );
   }
@@ -285,7 +284,7 @@ class ProjectDao {
       if(!project){
         return []
       }
-      return FileManager.parseMessage(project.messages || [])
+      return project.messages || []
     } catch (error) {
       throw new Error(`获取消息列表失败`);
     }

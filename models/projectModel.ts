@@ -152,7 +152,10 @@ const projectSchema: Schema = new Schema({
       enum: ['user', 'assistant'],
       required: true
     },
-    content: String,
+    content: {
+      type: Schema.Types.Mixed, // 使用 Mixed 类型以支持多种结构
+      required: true
+    },
     type: {
       type: String,
       enum: ['text', 'code', 'file', 'system'],

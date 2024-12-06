@@ -158,25 +158,4 @@ export class FileManager {
 
     return templatePath;
   }
-
-  static stringifyMessage(messages: IMessageResult[]): IMessageResult[] {
-   const encodeMsg = messages.map(x => {
-      const content = typeof x.content === "object" ? JSON.stringify(x.content) : x.content
-      return Object.assign(x, {content})
-    })
-    return encodeMsg
-  }
-
-  static parseMessage(messages: IMessageResult[]): IMessageResult[] {
-    const decodeMsg = messages.map(x => {
-      let content = x.content
-      try {
-        content = typeof x.content === "string" ? JSON.parse(x.content) : x.content
-      } catch{
-        //什么也不用做
-      }
-      return Object.assign(x, {content})
-    });
-    return decodeMsg
-  }
 }

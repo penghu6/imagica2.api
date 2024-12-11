@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "start": "ts-node -r tsconfig-paths/register ./bin/www.ts",
+    "start:hot": "nodemon -r tsconfig-paths/register ./bin/www.ts --watch config --watch controllers --watch dao --watch db --watch models --watch services --watch utils",
     "dev": "ts-node-dev -r tsconfig-paths/register --respawn ./bin/www.ts",
     "build": "tsc",
     "start:prod": "cross-env NODE_ENV=production ts-node -r tsconfig-paths/register ./bin/www.ts",

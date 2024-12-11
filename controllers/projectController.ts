@@ -4,6 +4,7 @@ import ProjectService from '../services/projectService';
 import { formatResponse } from '../utils/tools';
 import { BaseController } from './baseController';
 import { IProjectParam } from '../case/model/project/IProject';
+import ProjectPublishService from '../services/projectPublishService';
 
 /**
  * @swagger
@@ -84,10 +85,12 @@ import { IProjectParam } from '../case/model/project/IProject';
 @Controller('projects')
 export class ProjectController extends BaseController {
     private projectService: ProjectService;
+    private projectPublishService: ProjectPublishService;
 
     constructor() {
         super();
         this.projectService = new ProjectService();
+        this.projectPublishService = new ProjectPublishService();
     }
 
     /**
@@ -290,7 +293,7 @@ export class ProjectController extends BaseController {
      *                     description: 项目类型
      *                   owner:
      *                     type: string
-     *                     description: 项目所有者ID
+     *                     description: 项���所有者ID
      *                   tags:
      *                     type: array
      *                     items:
@@ -746,4 +749,37 @@ export class ProjectController extends BaseController {
             return formatResponse(1, error.message);
         }
     }
+
+    @Post('/published')
+    async publishedProject(req: Request) {
+        try {
+            const projectId = req.body.projectId as string;
+            if (!projectId) {
+                return formatResponse(1, '项目ID不能为空');
+            }
+
+            const project = await this.projectPublishService.publishProject(projectId);
+
+            return formatResponse(0, '获取项目详情成功', project);
+        } catch (error: any) {
+            return formatResponse(1, error.message);
+        }
+    }
+
+    @Get('/published/:publishId')
+    async getPublishedProject(req: Request) {
+        try {
+            const projectId = req.params.publishId;
+            if (!projectId) {
+                return formatResponse(1, '项目ID不能为空');
+            }
+
+            const project = await this.projectPublishService.getPublishProject(projectId);
+
+            return formatResponse(0, '获取项目详情成功', project);
+        } catch (error: any) {
+            return formatResponse(1, error.message);
+        }
+    }
+
 } 

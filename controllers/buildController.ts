@@ -8,15 +8,21 @@ import path from "path";
 import { existsSync } from "fs-extra";
 import { ProjectCompiler } from "../utils/ProjectCompiler";
 import { omit } from "lodash";
+import ProjectPublishService, {
+  PublishResult,
+} from "../services/projectPublishService";
+import { IProject } from "../models/projectModel";
 
 @Controller("build")
 export class BuildController extends BaseController {
   private projectService: ProjectService;
+  private projectPublishService: ProjectPublishService;
   private compiler: ProjectCompiler;
 
   constructor() {
     super();
     this.projectService = new ProjectService();
+    this.projectPublishService = new ProjectPublishService();
     this.compiler = new ProjectCompiler({
       root: bucket.compile,
       projectService: this.projectService,
@@ -53,6 +59,13 @@ export class BuildController extends BaseController {
 
       // 开始编译并流式返回数据
       await this.compiler.compile(targetPath, res);
+
+      // dist 数据保存
+      const publishResult = await this.compiler.getPublishResult(project);
+      await this.projectPublishService.savePublishResult(publishResult);
+
+      // 清除编译结果
+      await this.compiler.clearCompileDist(project);
     } catch (e) {
       res.write(
         JSON.stringify(
@@ -77,15 +90,12 @@ export class BuildController extends BaseController {
         return formatResponse(1, "项目不存在");
       }
 
-      const structureMap = await this.compiler.getCompileStructureMap(project, {
-        withRoot: true,
-        sep: "/",
-      });
-      const omitProject = omit(project.toObject(), ["fileMapping", "paths"]);
-      return formatResponse(0, "获取项目结构成功", {
-        files: structureMap,
-        project: omitProject,
-      });
+      const publishResult = await this.projectPublishService.getPublishResult(
+        project
+      );
+
+      await this.projectPublishService.savePublishResult(publishResult);
+      return formatResponse(0, "获取项目结构成功", publishResult);
     } catch (e) {
       return formatResponse(1, "获取项目结构失败", (e as Error).message);
     }

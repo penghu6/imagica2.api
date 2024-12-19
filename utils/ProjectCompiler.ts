@@ -15,6 +15,7 @@ import {
 import { exec } from "child_process";
 import { Readable } from "stream";
 import { WebContainerFileSystem } from "./WebContainerFileSystem";
+import { PublishResult } from "../services/projectPublishService";
 
 export type ProjectStructureMap = {
   [key: string]: Pick<FileStructure, "name" | "path" | "content">;
@@ -208,5 +209,25 @@ export class ProjectCompiler {
     );
 
     return ProjectStructureMapUtil.structureToMap(files, options);
+  }
+
+  async getPublishResult(project: IProject): Promise<PublishResult> {
+    const structureMap = await this.getCompileStructureMap(project, {
+      withRoot: true,
+      sep: "/",
+    });
+
+    const publishResult: PublishResult = {
+      files: structureMap,
+      project: project,
+    };
+
+    return publishResult;
+  }
+
+  async clearCompileDist(project: IProject) {
+    const targetPath = this.getCompilePath(project.id || "");
+    const distPath = join(targetPath, "dist");
+    await remove(distPath);
   }
 }

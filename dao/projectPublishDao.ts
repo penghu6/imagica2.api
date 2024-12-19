@@ -2,7 +2,7 @@ import { IProject } from "../models/projectModel";
 import EncryptedProjectModel, {
   IEncryptedProject,
 } from "../models/encryptedProjectModel";
-import { ProjectPublishEncryptObject } from "../utils/projectPublishEncrypt";
+import { ProjectPublishEncryptOutput } from "../utils/ProjectPublishEncrypt";
 
 class ProjectPublishDao {
   constructor() {}
@@ -12,7 +12,7 @@ class ProjectPublishDao {
    */
   async createProject(
     project: IProject,
-    projectData: ProjectPublishEncryptObject
+    projectData: ProjectPublishEncryptOutput
   ): Promise<IEncryptedProject> {
     // 保存加密结果到数据库
     const encryptedProject = new EncryptedProjectModel({

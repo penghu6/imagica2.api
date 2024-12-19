@@ -97,37 +97,52 @@ export class ProjectController extends BaseController {
      * @swagger
      * /api/projects/create:
      *   post:
-     *     summary: 创建新项目
+     *     summary: Create new project
      *     tags: [Projects]
      *     requestBody:
      *       required: true
      *       content:
      *         application/json:
      *           schema:
-     *             $ref: '#/components/schemas/ProjectParam'
-     *     responses:
-     *       200:
-     *         description: 创建成功
-     *         content:
-     *           application/json:
-     *             schema:
-     *               type: object
-     *               properties:
-     *                 code:
-     *                   type: number
-     *                   example: 0
-     *                 msg:
+     *             type: object
+     *             required:
+     *               - name
+     *               - type
+     *               - owner
+     *             properties:
+     *               name:
+     *                 type: string
+     *                 description: Project name
+     *               description:
+     *                 type: string
+     *                 description: Project description
+     *               type:
+     *                 type: string
+     *                 enum: [react, vue, html, nextjs]
+     *                 description: Project type
+     *               owner:
+     *                 type: string
+     *                 description: Project owner ID
+     *               tags:
+     *                 type: array
+     *                 items:
      *                   type: string
-     *                   example: 创建项目成功
-     *                 data:
-     *                   $ref: '#/components/schemas/IProjectResult'
+     *                 description: Project tags
+     *               status:
+     *                 type: string
+     *                 enum: [development, completed]
+     *                 description: Project status
+     *               theme:
+     *                 type: string
+     *                 enum: [system, light, dark]
+     *                 default: system
+     *                 description: Project theme preference
      */
     @Post('/create')
     async createProject(req: Request) {
         try {
-            const param = req.body;
-            const project = await this.projectService.createProject(param);
-            return formatResponse(0, '创建项目成功', project);
+            const project = await this.projectService.createProject(req.body);
+            return formatResponse(0, 'Project created successfully', project);
         } catch (error: any) {
             return formatResponse(1, error.message);
         }
@@ -137,18 +152,18 @@ export class ProjectController extends BaseController {
      * @swagger
      * /api/projects/user:
      *   get:
-     *     summary: 获取用户的所有项目
+     *     summary: Get user's projects
      *     tags: [Projects]
      *     parameters:
      *       - in: query
      *         name: userId
      *         required: true
-     *         description: 用户ID
+     *         description: User ID
      *         schema:
      *           type: string
      *     responses:
      *       200:
-     *         description: 获取成功
+     *         description: Success
      *         content:
      *           application/json:
      *             schema:
@@ -159,13 +174,13 @@ export class ProjectController extends BaseController {
      *                   example: 0
      *                 msg:
      *                   type: string
-     *                   example: 获取项目列表成功
+     *                   example: Successfully retrieved project list
      *                 data:
      *                   type: array
      *                   items:
-     *                     $ref: '#/components/schemas/IProjectResult'  # 假设 IProjectResult 是项目的结构
+     *                     $ref: '#/components/schemas/IProjectResult'
      *       400:
-     *         description: 请求参数错误
+     *         description: Bad Request
      *         content:
      *           application/json:
      *             schema:
@@ -176,17 +191,17 @@ export class ProjectController extends BaseController {
      *                   example: 1
      *                 msg:
      *                   type: string
-     *                   example: 用户ID不能为空
+     *                   example: User ID is required
      */
     @Get('/user')
     async getUserProjects(req: Request) {
         try {
-            const userId = req.query.userId as string; // 从查询参数中获取用户ID
+            const userId = req.query.userId as string;
             if (!userId) {
-                return formatResponse(1, '用户ID不能为空');
+                return formatResponse(1, 'User ID is required');
             }
             const projects = await this.projectService.getUserProjects(userId);
-            return formatResponse(0, '获取项目列表成功', projects);
+            return formatResponse(0, 'Successfully retrieved project list', projects);
         } catch (error: any) {
             return formatResponse(1, error.message);
         }
@@ -293,7 +308,7 @@ export class ProjectController extends BaseController {
      *                     description: 项目类型
      *                   owner:
      *                     type: string
-     *                     description: 项���所有者ID
+     *                     description: 项目所有者ID
      *                   tags:
      *                     type: array
      *                     items:
@@ -479,13 +494,13 @@ export class ProjectController extends BaseController {
      * @swagger
      * /api/projects/{projectId}/updateFiles:
      *   put:
-     *     summary: 更新项目文件
+     *     summary: Update project files
      *     tags: [Projects]
      *     parameters:
      *       - in: path
      *         name: projectId
      *         required: true
-     *         description: 项目ID
+     *         description: Project ID
      *         schema:
      *           type: string
      *     requestBody:
@@ -502,61 +517,34 @@ export class ProjectController extends BaseController {
      *                   properties:
      *                     name:
      *                       type: string
-     *                       description: 文件或目录的名称
+     *                       description: File or directory name
      *                     type:
      *                       type: string
      *                       enum: [file, directory]
-     *                       description: 文件或目录的类型
+     *                       description: Type of item
      *                     path:
      *                       type: string
-     *                       description: 文件或目录的路径
+     *                       description: File or directory path
      *                     content:
      *                       type: string
-     *                       description: 文件内容（仅在类型为 file 时提供）
+     *                       description: File content (only for file type)
      *                     children:
      *                       type: array
      *                       items:
-     *                         $ref: '#/components/schemas/FileStructure'  # 如果有子文件夹
-     *     responses:
-     *       200:
-     *         description: 更新成功
-     *         content:
-     *           application/json:
-     *             schema:
-     *               type: object
-     *               properties:
-     *                 code:
-     *                   type: number
-     *                   example: 0
-     *                 message:
-     *                   type: string
-     *                   example: 更新项目文件成功
-     *       400:
-     *         description: 请求参数错误
-     *         content:
-     *           application/json:
-     *             schema:
-     *               type: object
-     *               properties:
-     *                 code:
-     *                   type: number
-     *                   example: 1
-     *                 message:
-     *                   type: string
-     *                   example: 数据格式不正确
+     *                         $ref: '#/components/schemas/FileStructure'
      */
     @Put('/:projectId/updateFiles')
     async updateProjectFiles(req: Request, res: Response) {
         try {
             const projectId = req.params.projectId;
-            const { data } = req.body; // 获取传入的数据
+            const { data } = req.body;
 
             if (!data || !Array.isArray(data)) {
-                return res.status(400).json(formatResponse(-1, '数据格式不正确'));
+                return res.status(400).json(formatResponse(-1, 'Invalid data format'));
             }
 
             await this.projectService.updateProjectFiles(projectId, data);
-            return formatResponse(0, '更新项目文件成功');
+            return formatResponse(0, 'Project files updated successfully');
         } catch (error: any) {
             return res.status(500).json(formatResponse(-1, error.message));
         }
@@ -652,7 +640,7 @@ export class ProjectController extends BaseController {
     async getSharedProjects(req: Request) {
         try {
             const shares = await this.projectService.getSharedProjects(req.query.userId as string);
-            return formatResponse(0, '获取分享列表成功', shares);
+            return formatResponse(0, '获取分享列��成功', shares);
         } catch (error: any) {
             return formatResponse(1, error.message);
         }
@@ -695,7 +683,7 @@ export class ProjectController extends BaseController {
      *                   example: 0
      *                 msg:
      *                   type: string
-     *                   example: 删除分享成功
+     *                   example: 删除分享成���
      */
     @Post('/shared/:shareId/delete')
     async deleteShare(req: Request) {
@@ -714,7 +702,7 @@ export class ProjectController extends BaseController {
      * /api/projects/shared/{shareId}:
      *   get:
      *     summary: 获取分享的项目
-     *     description: 通过分享ID获取项目信息，任何人都可以访问
+     *     description: 通过分享ID获取项目信息，任何人都以访问
      *     tags: [Projects]
      *     parameters:
      *       - in: path

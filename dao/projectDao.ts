@@ -24,8 +24,17 @@ class ProjectDao {
    * 创建新项目
    */
   async createProject(projectData: IProjectParam): Promise<IProjectResult> {
+    // 添加日志检查传入的数据
+    console.log('Creating project with data:', projectData.theme);
+    
     // 创建项目记录
-    const project = await new ProjectModel(projectData).save();
+    const project = await new ProjectModel({
+      ...projectData,
+      theme: projectData.theme  // 确保明确设置 theme
+    }).save();
+    
+    console.log('Created project:', project);
+    
     const result = this.convertToProjectResult(project);
     return result;
   }
@@ -202,15 +211,12 @@ class ProjectDao {
       type: project.type,
       status: project.status,
       tags: project.tags,
+      theme: project.theme || 'system',
 
       // ===== 项目代码与对话 =====
       code: (project as any).code,
       messages: project.messages,
       runCommand: project.runCommand,
-      // ===== 路径管理 =====
-      // paths: project.paths,
-      // ===== 文件管理 =====
-      // fileMapping: project.fileMapping,
 
       // ===== 版本管理 =====
       devVersions: project.devVersions,
@@ -273,7 +279,7 @@ class ProjectDao {
   /**
    * 根据项目ID获取消息列表
    * @param projectId 项目ID
-   * @param page 页码（可选）
+   * @param page 页��（可选）
    * @param pageSize 每页大小（可选）
    * @returns 消息列表
    */

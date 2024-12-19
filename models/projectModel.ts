@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import path from 'path';
 import { IMessageResult } from '../case/model/message/IMessage';
-import { IProjectResult } from '../case/model/project/IProject';
+import { IProjectResult, ProjectTheme } from '../case/model/project/IProject';
 
 /**
  * 项目接口定义
@@ -85,6 +85,9 @@ export interface IProject extends Document {
   updatedAt: Date;
   /** 项目版本 1，2 */
   version: number;
+
+  /** 项目主题 */
+  theme: ProjectTheme;
 }
 
 /**
@@ -218,6 +221,11 @@ const projectSchema: Schema = new Schema({
   version: {
     type: Number,
     default: 1
+  },
+  theme: {
+    type: String,
+    enum: ['system', 'light', 'dark'],
+    default: 'system'
   }
 }, {
   timestamps: true,  // 自动管理 createdAt 和 updatedAt

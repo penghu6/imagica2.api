@@ -67,7 +67,6 @@ class ProjectPublishService {
     projectId: string
   ): Promise<ProjectPublishEncryptInput> {
     const result = await this.projectPublishDao.getProjectById(projectId);
-    console.log("getpublishproject", result);
     if (!result) {
       throw new Error("Get Publish Project Failed!");
     }

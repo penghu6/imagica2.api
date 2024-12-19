@@ -11,7 +11,8 @@ const encryptedProjectSchema: Schema = new Schema({
   projectId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Project',
-    required: true
+    required: true,
+    unique: true
   },
   projectEncrypted: {
     type: String,

@@ -7,11 +7,7 @@ import { bucket } from "../config/storage";
 import path from "path";
 import { existsSync } from "fs-extra";
 import { ProjectCompiler } from "../utils/ProjectCompiler";
-import { omit } from "lodash";
-import ProjectPublishService, {
-  PublishResult,
-} from "../services/projectPublishService";
-import { IProject } from "../models/projectModel";
+import ProjectPublishService from "../services/projectPublishService";
 
 @Controller("build")
 export class BuildController extends BaseController {

@@ -77,13 +77,13 @@ export class ProjectCompiler {
     this.projectService = projectService;
   }
 
-  async getCompilePathByProject(project: IProject) {
+  async getCompilePathByProject(project: IProject, mode: number = this.mode) {
     // 1. 直接使用项目开发目录
-    if (this.mode === 1) {
+    if (mode === 1) {
       return Promise.resolve(project.paths.development);
     }
     // 2. 复制项目开发目录到编译目录
-    if (this.mode === 2) {
+    if (mode === 2) {
       return this.copyFileToCompile(project);
     }
 
@@ -103,8 +103,6 @@ export class ProjectCompiler {
     await ensureDir(targetPath);
 
     await copy(project.paths.development, targetPath, { overwrite: true });
-
-    console.log("targetPath", targetPath);
 
     return targetPath;
   }
@@ -196,7 +194,7 @@ export class ProjectCompiler {
     project: IProject,
     options?: ProjectStructureMapOptions
   ): Promise<ProjectStructureMap> {
-    const targetPath = this.getCompilePath(project.id || "");
+    const targetPath = await this.getCompilePathByProject(project, 1);
 
     const distPath = join(targetPath, "dist");
 
@@ -207,6 +205,8 @@ export class ProjectCompiler {
     const files = await new WebContainerFileSystem().getDirectoryStructure(
       distPath
     );
+
+    console.log("files", files);
 
     return ProjectStructureMapUtil.structureToMap(files, options);
   }
@@ -226,7 +226,7 @@ export class ProjectCompiler {
   }
 
   async clearCompileDist(project: IProject) {
-    const targetPath = this.getCompilePath(project.id || "");
+    const targetPath = await this.getCompilePathByProject(project, 1);
     const distPath = join(targetPath, "dist");
     await remove(distPath);
   }

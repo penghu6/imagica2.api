@@ -21,14 +21,18 @@ class ProjectPublishDao {
       structuresEncrypted: projectData.structuresEncrypted,
     });
 
+    // 删除旧的
+    await EncryptedProjectModel.deleteMany({ projectId: project.id });
+
     return await encryptedProject.save();
   }
-
 
   async getProjectById(projectId: string) {
     const result = await EncryptedProjectModel.findOne({
       projectId: projectId,
-    });
+    })
+      .sort({ createdAt: -1 }) // Sort by createdAt in descending order
+      .exec();
 
     return result;
   }

@@ -26,10 +26,18 @@ export class TestController extends BaseController {
   @Get("/getEnv")
   async getEnv(req: Request, res: Response) {
 
-    const nodeVersion = await this.execPromise("node -v");
-    const npmVersion = await this.execPromise("npm -v");
-    const dockerVersion = await this.execPromise("docker -v");
-    const dockerComposeVersion = await this.execPromise("docker-compose -v");
+    const nodeVersion = await this.execPromise("node -v").catch((error) => {
+      return "node -v 获取失败";
+    });
+    const npmVersion = await this.execPromise("npm -v").catch((error) => {
+      return "npm -v 获取失败";
+    });
+    const dockerVersion = await this.execPromise("docker -v").catch((error) => {
+      return "docker -v 获取失败";
+    });
+    const dockerComposeVersion = await this.execPromise("docker-compose -v").catch((error) => {
+      return "docker-compose -v 获取失败";
+    });
 
     return formatResponse(0, "测试成功", {
       nodeVersion,

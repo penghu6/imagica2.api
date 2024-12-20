@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import { IMessageResult } from "../message/IMessage";
 
 // API 响应结果接口，保证前端数据一致性，你也可以将类型发布到npm
+export type ProjectTheme = 'system' | 'light' | 'dark';
+
 export interface IProjectResult {
   // ===== 项目基础信息 =====
   id?: string;
@@ -19,6 +21,7 @@ export interface IProjectResult {
   type: "react" | "vue" | "html" | "nextjs" | "upload";
   tags: string[];
   status: "development" | "completed";
+  theme: ProjectTheme;
 
   // ===== 项目代码与对话 =====
   code: string;
@@ -95,4 +98,5 @@ export interface IProjectParam {
   tags?: string[];
   status?: "development" | "completed";
   messages?: IMessageResult[];
+  theme?: ProjectTheme;
 }

@@ -2,7 +2,7 @@ import { IProject } from "../models/projectModel";
 import EncryptedProjectModel, {
   IEncryptedProject,
 } from "../models/encryptedProjectModel";
-import { ProjectPublishEncryptObject } from "../utils/projectPublishEncrypt";
+import { ProjectPublishEncryptObject } from "../utils/ProjectPublishEncrypt";
 
 class ProjectPublishDao {
   constructor() {}

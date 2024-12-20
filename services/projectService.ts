@@ -8,7 +8,7 @@ import ProjectShareModel from "../models/projectShareModel";
 import mongoose, { Types } from "mongoose";
 import path from "path";
 import AiChatService from "./aiChatService";
-import { ProjectPublishEncrypt } from "../utils/projectPublishEncrypt";
+import { ProjectPublishEncrypt } from "../utils/ProjectPublishEncrypt";
 import ProjectPublishDao from "../dao/projectPublishDao";
 
 class ProjectService {

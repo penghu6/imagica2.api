@@ -1,6 +1,6 @@
 import ProjectDao from "../dao/projectDao";
 import { WebContainerFileSystem } from "../utils/WebContainerFileSystem";
-import { ProjectPublishEncrypt, ProjectPublishEncryptObject } from "../utils/projectPublishEncrypt";
+import { ProjectPublishEncrypt, ProjectPublishEncryptObject } from "../utils/ProjectPublishEncrypt";
 import ProjectPublishDao from "../dao/projectPublishDao";
 
 class ProjectPublishService {

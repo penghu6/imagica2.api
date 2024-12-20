@@ -8,12 +8,14 @@ import path from "path";
 import { existsSync } from "fs-extra";
 import { ProjectCompiler } from "../utils/ProjectCompiler";
 import ProjectPublishService from "../services/projectPublishService";
+import { Mutex } from 'async-mutex';
 
 @Controller("build")
 export class BuildController extends BaseController {
   private projectService: ProjectService;
   private projectPublishService: ProjectPublishService;
   private compiler: ProjectCompiler;
+  private compileLocks: Map<string, Mutex>;
 
   constructor() {
     super();
@@ -23,53 +25,69 @@ export class BuildController extends BaseController {
       root: bucket.compile,
       projectService: this.projectService,
     });
+    this.compileLocks = new Map();
   }
 
   @Post("/compile")
   async compile(req: Request, res: Response) {
     const projectId = req.body.projectId;
-    if (!projectId) {
-      res.write(JSON.stringify(formatResponse(1, "项目ID不能为空")));
+    if (!projectId || typeof projectId !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(projectId)) {
+      res.write(JSON.stringify(formatResponse(1, "项目ID格式不正确")));
       return res.end();
     }
 
-    const project =
-      await this.projectService.projectDao.findProjectByIdNoReturn(projectId);
-    if (!project) {
-      res.write(JSON.stringify(formatResponse(1, "项目不存在")));
-      return res.end();
+    let projectLock = this.compileLocks.get(projectId);
+    if (!projectLock) {
+      projectLock = new Mutex();
+      this.compileLocks.set(projectId, projectLock);
     }
 
-    try {
-      const targetPath = await this.compiler.getCompilePathByProject(project);
+    await projectLock.runExclusive(async () => {
+      try {
+        const project = await this.projectService.projectDao.findProjectByIdNoReturn(projectId);
+        if (!project) {
+          res.write(JSON.stringify(formatResponse(1, "项目不存在")));
+          return res.end();
+        }
 
-      // 检查是否存在 package.json
-      const packageJsonPath = path.join(targetPath, "package.json");
-      if (!existsSync(packageJsonPath)) {
-        res.write(JSON.stringify(formatResponse(1, "package.json 不存在")));
-        return res.end();
+        const targetPath = path.resolve(await this.compiler.getCompilePathByProject(project));
+
+        const packageJsonPath = path.join(targetPath, "package.json");
+        if (!existsSync(packageJsonPath)) {
+          res.write(JSON.stringify(formatResponse(1, "package.json 不存在")));
+          return res.end();
+        }
+
+        res.setHeader("Content-Type", "text/event-stream");
+
+        try {
+          await this.compiler.compile(targetPath, res);
+        } catch (compileError) {
+          res.write(JSON.stringify(formatResponse(1, "编译失败", (compileError as Error).message)));
+          return res.end();
+        }
+
+        try {
+          const publishResult = await this.compiler.getPublishResult(project);
+          await this.projectPublishService.savePublishResult(publishResult);
+        } catch (publishError) {
+          res.write(JSON.stringify(formatResponse(1, "保存发布结果失败", (publishError as Error).message)));
+          return res.end();
+        }
+
+        try {
+          await this.compiler.clearCompileDist(project);
+          res.write(JSON.stringify(formatResponse(0, "编译和清理成功")));
+        } catch (clearError) {
+          res.write(JSON.stringify(formatResponse(1, "清理编译结果失败", (clearError as Error).message)));
+        }
+
+      } catch (e) {
+        res.write(JSON.stringify(formatResponse(1, "获取项目结构失败", (e as Error).message)));
+      } finally {
+        res.end();
       }
-
-      // 设置响应头，指示这是一个流式响应
-      res.setHeader("Content-Type", "text/event-stream");
-
-      // 开始编译并流式返回数据
-      await this.compiler.compile(targetPath, res);
-
-      // dist 数据保存
-      const publishResult = await this.compiler.getPublishResult(project);
-      await this.projectPublishService.savePublishResult(publishResult);
-
-      // 清除编译结果
-      await this.compiler.clearCompileDist(project);
-    } catch (e) {
-      res.write(
-        JSON.stringify(
-          formatResponse(1, "获取项目结构失败", (e as Error).message)
-        )
-      );
-      res.end();
-    }
+    });
   }
 
   @Get("/dist/:projectId")

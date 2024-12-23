@@ -139,14 +139,29 @@ export class ProjectCompiler {
       const compileProcess = exec(command, { timeout: 60000 });
 
       compileProcess.stdout?.on("data", (data) => {
-        stream.push("\n" + data.toString());
+        const lines = data.toString().split('\n'); // 根据换行符拆分数据
+        for (const line of lines) {
+          if (line.trim()) { // 确保不发送空行
+            stream.push(`data: ${line.trim()}\n\n`); // 逐行发送
+          }
+        }
       });
       compileProcess.stderr?.on("data", (data) => {
-        stream.push("\n" + data.toString());
+        const lines = data.toString().split('\n'); // 根据换行符拆分数据
+        for (const line of lines) {
+          if (line.trim()) { // 确保不发送空行
+            stream.push(`data: ${line.trim()}\n\n`); // 逐行发送
+          }
+        }
       });
 
       compileProcess.on("error", (error) => {
-        stream.push("\n命令执行错误：" + error.message);
+        const lines = error.message.toString().split('\n'); // 根据换行符拆分数据
+        for (const line of lines) {
+          if (line.trim()) { // 确保不发送空行
+            stream.push(`data: 命令执行错误: ${line.trim()}\n\n`); // 逐行发送
+          }
+        }
         reject(error);
       });
 
@@ -168,23 +183,23 @@ export class ProjectCompiler {
     stream.pipe(res);
 
     function over() {
-      stream.push("\n编译结束");
+      stream.push("data: 编译结束\n\n");
       stream.push(null); // 结束流
       res.end(); // 结束响应
     }
 
     try {
-      stream.push("\n检查node版本...");
+      stream.push("data: 检查node版本...\n\n");
       await this.execPromise(`cd ${targetPath} && node -v`, stream);
 
-      stream.push("\n开始安装依赖...");
+      stream.push("data: 开始安装依赖...\n\n");
       await this.execPromise(`cd ${targetPath} && npm install`, stream);
 
-      stream.push("\n开始构建...");
+      stream.push("data: 开始构建...\n\n");
       await this.execPromise(`cd ${targetPath} && npm run build`, stream);
     } catch (error) {
       console.log("\n编译过程中发生错误：" + error);
-      stream.push("\n编译过程中发生错误：" + error);
+      stream.push(`data: 编译过程中发生错误：${error}\n\n`);
     } finally {
       over();
     }

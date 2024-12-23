@@ -34,3 +34,4 @@ coverage
 **/.dumi/tmp-production
 imagica2/bucket/storage/
 imagica2/bucket/users/
+imagica2/bucket/compile/

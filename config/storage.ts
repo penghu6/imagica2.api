@@ -5,7 +5,8 @@ const rootDir = process.cwd();
 
 const bucket = {
   root: path.join(rootDir, process.env.FILE_PATH || 'bucket'),
-  temp: path.join(rootDir, process.env.STORAGE_TEMP || 'bucket/temp')
+  temp: path.join(rootDir, process.env.STORAGE_TEMP || 'bucket/temp'),
+  compile: path.join(rootDir, process.env.COMPILE_ROOT_PATH || 'bucket/compile')
 };
 
 // 确保目录存在
@@ -13,6 +14,7 @@ const bucket = {
   try {
     await fs.mkdir(bucket.root, { recursive: true });
     await fs.mkdir(bucket.temp, { recursive: true });
+    await fs.mkdir(bucket.compile, { recursive: true });
     console.log('存储目录已创建');
   } catch (error) {
     console.error('创建存储目录失败:', error);

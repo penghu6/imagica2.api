@@ -12,7 +12,7 @@ import { ProjectPublishEncrypt } from "../utils/ProjectPublishEncrypt";
 import ProjectPublishDao from "../dao/projectPublishDao";
 
 class ProjectService {
-  private projectDao: ProjectDao;
+  public projectDao: ProjectDao;
   private projectPublishDao: ProjectPublishDao;
   private fileSystem: WebContainerFileSystem;
   private aiChatService: AiChatService;
@@ -330,7 +330,10 @@ class ProjectService {
       throw new Error("Plublish faild!");
     }
 
-    const entryptedObject = ProjectPublishEncrypt.encrypt(project, structures);
+    const entryptedObject = ProjectPublishEncrypt.encrypt({
+      project,
+      structures,
+    });
 
     const result = await this.projectPublishDao.createProject(project, entryptedObject);
 

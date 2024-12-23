@@ -82,7 +82,7 @@ export class WebContainerFileSystem {
   /**
    * 获取目录结构
    */
-  private async getDirectoryStructure(
+  async getDirectoryStructure(
     dirPath: string,
     basePath: string = ''
   ): Promise<FileStructure[]> {

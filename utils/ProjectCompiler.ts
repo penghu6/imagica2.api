@@ -16,6 +16,7 @@ import { exec } from "child_process";
 import { Readable } from "stream";
 import { WebContainerFileSystem } from "./WebContainerFileSystem";
 import { PublishResult } from "../services/projectPublishService";
+import { OUTPUT_DIRS } from "./consts";
 
 export type ProjectStructureMap = {
   [key: string]: Pick<FileStructure, "name" | "path" | "content">;
@@ -211,15 +212,15 @@ export class ProjectCompiler {
   ): Promise<ProjectStructureMap> {
     const targetPath = await this.getCompilePathByProject(project, 1);
 
-    const distPath = join(targetPath, "dist");
+    // 检查是否存在 dist 或 build 目录
+    const existingDir = OUTPUT_DIRS.find(dir => existsSync(join(targetPath, dir)));
 
-    if (!existsSync(distPath)) {
+    if (!existingDir) {
       return {};
     }
 
-    const files = await new WebContainerFileSystem().getDirectoryStructure(
-      distPath
-    );
+    const dirPath = join(targetPath, existingDir);
+    const files = await new WebContainerFileSystem().getDirectoryStructure(dirPath);
 
     console.log("files", files);
 
@@ -242,7 +243,14 @@ export class ProjectCompiler {
 
   async clearCompileDist(project: IProject) {
     const targetPath = await this.getCompilePathByProject(project, 1);
-    const distPath = join(targetPath, "dist");
-    await remove(distPath);
+    
+    // 检查并删除 dist 或 build 目录
+    for (const dir of OUTPUT_DIRS) {
+      const dirPath = join(targetPath, dir);
+      if (existsSync(dirPath)) {
+        await remove(dirPath);
+        break; // 找到并删除一个后退出循环
+      }
+    }
   }
 }

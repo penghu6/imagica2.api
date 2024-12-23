@@ -6,3 +6,5 @@ export const ignorFile = [
     /dist\//, 
     /__MACOSX\//
 ]
+
+export const OUTPUT_DIRS = ["dist", "build"];

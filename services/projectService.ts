@@ -70,11 +70,12 @@ class ProjectService {
     return {
       _id: projectId,
       ...param,
+      theme: param.theme || 'system',
       paths,
       devVersions: [
         {
           version: "dev-1",
-          description: "初始版本",
+          description: "Initial version",
           createdAt: new Date(),
         },
       ],
@@ -82,7 +83,7 @@ class ProjectService {
       messages: [],
       currentDevVersion: "dev-1",
       isAITyping: false,
-      runCommand, // 添加 runCommand 字段
+      runCommand,
     };
   }
   /**

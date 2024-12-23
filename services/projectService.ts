@@ -330,7 +330,10 @@ class ProjectService {
       throw new Error("Plublish faild!");
     }
 
-    const entryptedObject = ProjectPublishEncrypt.encrypt(project, structures);
+    const entryptedObject = ProjectPublishEncrypt.encrypt({
+      project,
+      structures,
+    });
 
     const result = await this.projectPublishDao.createProject(project, entryptedObject);
 

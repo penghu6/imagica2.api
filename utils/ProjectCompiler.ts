@@ -196,8 +196,8 @@ export class ProjectCompiler {
     }
 
     try {
-      stream.push("data: node version:\n\n");
-      await this.execPromise(`cd ${targetPath} && node -v`, stream, true);
+      // stream.push("data: node version:\n\n");
+      // await this.execPromise(`cd ${targetPath} && node -v`, stream, true);
 
       stream.push("data: <COMMAND-START>npm install<COMMAND-START>\n\n");
       await this.execPromise(`cd ${targetPath} && npm install`, stream);

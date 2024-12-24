@@ -16,6 +16,7 @@ import { exec } from "child_process";
 import { Readable } from "stream";
 import { WebContainerFileSystem } from "./WebContainerFileSystem";
 import { PublishResult } from "../services/projectPublishService";
+import { OUTPUT_DIRS } from "./consts";
 
 export type ProjectStructureMap = {
   [key: string]: Pick<FileStructure, "name" | "path" | "content">;
@@ -134,19 +135,36 @@ export class ProjectCompiler {
     return targetPath;
   }
 
-  async execPromise(command: string, stream: Readable) {
+  async execPromise(command: string, stream: Readable, needStdout: boolean = false) {
     return new Promise((resolve, reject) => {
       const compileProcess = exec(command, { timeout: 60000 });
 
-      compileProcess.stdout?.on("data", (data) => {
-        stream.push("\n" + data.toString());
-      });
+      if(needStdout) {
+        compileProcess.stdout?.on("data", (data) => {
+          const lines = data.toString().split('\n'); // 根据换行符拆分数据
+          for (const line of lines) {
+            if (line.trim()) { // 确保不发送空行
+              stream.push(`data: ${line.trim()}\n\n`); // 逐行发送
+            }
+          }
+        });
+      }
       compileProcess.stderr?.on("data", (data) => {
-        stream.push("\n" + data.toString());
+        const lines = data.toString().split('\n'); // 根据换行符拆分数据
+        for (const line of lines) {
+          if (line.trim()) { // 确保不发送空行
+            stream.push(`data: ${line.trim()}\n\n`); // 逐行发送
+          }
+        }
       });
 
       compileProcess.on("error", (error) => {
-        stream.push("\n命令执行错误：" + error.message);
+        const lines = error.message.toString().split('\n'); // 根据换行符拆分数据
+        for (const line of lines) {
+          if (line.trim()) { // 确保不发送空行
+            stream.push(`data: run command error: ${line.trim()}\n\n`); // 逐行发送
+          }
+        }
         reject(error);
       });
 
@@ -154,7 +172,12 @@ export class ProjectCompiler {
         if (code === 0) {
           resolve("命令执行完成");
         } else {
-          reject("命令执行失败");
+          let cmd = command
+          if (command.includes('&&')) {
+            cmd = command.split('&&').pop()?.trim() || '';
+          }
+          stream.push(`data: <COMMAND-FAILED>${cmd}<COMMAND-FAILED>\n\n`);
+          reject(`${cmd} failed`);
         }
       });
     });
@@ -168,23 +191,26 @@ export class ProjectCompiler {
     stream.pipe(res);
 
     function over() {
-      stream.push("\n编译结束");
+      stream.push("data: [DONE]\n\n");
       stream.push(null); // 结束流
       res.end(); // 结束响应
     }
 
     try {
-      stream.push("\n检查node版本...");
-      await this.execPromise(`cd ${targetPath} && node -v`, stream);
+      // stream.push("data: node version:\n\n");
+      // await this.execPromise(`cd ${targetPath} && node -v`, stream, true);
 
-      stream.push("\n开始安装依赖...");
+      stream.push("data: <COMMAND-START>npm install<COMMAND-START>\n\n");
       await this.execPromise(`cd ${targetPath} && npm install`, stream);
+      stream.push("data: <COMMAND-END>npm install<COMMAND-END>\n\n");
 
-      stream.push("\n开始构建...");
+      stream.push("data: <COMMAND-START>npm run build<COMMAND-START>\n\n");
       await this.execPromise(`cd ${targetPath} && npm run build`, stream);
+      stream.push("data: <COMMAND-END>npm run build<COMMAND-END>\n\n");
+      stream.push("data: Build Successful\n\n");
     } catch (error) {
       console.log("\n编译过程中发生错误：" + error);
-      stream.push("\n编译过程中发生错误：" + error);
+      stream.push(`data: Build Failed: ${error}\n\n`);
     } finally {
       over();
     }
@@ -196,15 +222,15 @@ export class ProjectCompiler {
   ): Promise<ProjectStructureMap> {
     const targetPath = await this.getCompilePathByProject(project, 1);
 
-    const distPath = join(targetPath, "dist");
+    // 检查是否存在 dist 或 build 目录
+    const existingDir = OUTPUT_DIRS.find(dir => existsSync(join(targetPath, dir)));
 
-    if (!existsSync(distPath)) {
+    if (!existingDir) {
       return {};
     }
 
-    const files = await new WebContainerFileSystem().getDirectoryStructure(
-      distPath
-    );
+    const dirPath = join(targetPath, existingDir);
+    const files = await new WebContainerFileSystem().getDirectoryStructure(dirPath);
 
     console.log("files", files);
 
@@ -227,7 +253,14 @@ export class ProjectCompiler {
 
   async clearCompileDist(project: IProject) {
     const targetPath = await this.getCompilePathByProject(project, 1);
-    const distPath = join(targetPath, "dist");
-    await remove(distPath);
+    
+    // 检查并删除 dist 或 build 目录
+    for (const dir of OUTPUT_DIRS) {
+      const dirPath = join(targetPath, dir);
+      if (existsSync(dirPath)) {
+        await remove(dirPath);
+        break; // 找到并删除一个后退出循环
+      }
+    }
   }
 }

@@ -93,6 +93,10 @@ class ProjectPublishService {
 
     return { project, files: encryptInput.structures };
   }
+
+  async removePublishResult(projectId: string) {
+    await this.projectPublishDao.deleteProject(projectId);
+  }
 }
 
 export default ProjectPublishService;

@@ -68,8 +68,8 @@ export class BuildController extends BaseController {
         }
 
         res.setHeader("Content-Type", "text/event-stream");
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Connection", "keep-alive");
 
         try {
           await this.compiler.compile(targetPath, res);
@@ -86,7 +86,7 @@ export class BuildController extends BaseController {
           const publishResult = await this.compiler.getPublishResult(project);
           await this.projectPublishService.savePublishResult(publishResult);
           await this.projectService.updatePublishSettings(projectId, {
-            customDomain: '',
+            customDomain: "",
             published: true,
             publishTime: Date.now(),
           });
@@ -151,6 +151,26 @@ export class BuildController extends BaseController {
       return formatResponse(0, "获取项目结构成功", publishResult);
     } catch (e) {
       return formatResponse(1, "获取项目结构失败", (e as Error).message);
+    }
+  }
+
+  @Post("/unpublish/:projectId")
+  async unpublish(req: Request, res: Response) {
+    const projectId = req.params.projectId as string;
+    if (!projectId) {
+      return formatResponse(1, "项目ID不能为空");
+    }
+
+    try {
+      await this.projectService.updatePublishSettings(projectId, {
+        published: false,
+        publishTime: undefined,
+      });
+
+      await this.projectPublishService.removePublishResult(projectId);
+      return formatResponse(0, "取消发布成功");
+    } catch (e) {
+      return formatResponse(1, "取消发布成功", (e as Error).message);
     }
   }
 }

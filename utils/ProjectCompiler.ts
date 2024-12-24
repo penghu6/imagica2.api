@@ -191,6 +191,7 @@ export class ProjectCompiler {
     stream.pipe(res);
 
     function over() {
+      stream.push("data: [DONE]\n\n");
       stream.push(null); // 结束流
       res.end(); // 结束响应
     }

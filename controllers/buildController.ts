@@ -8,7 +8,7 @@ import path from "path";
 import { existsSync } from "fs-extra";
 import { ProjectCompiler } from "../utils/ProjectCompiler";
 import ProjectPublishService from "../services/projectPublishService";
-import { Mutex } from 'async-mutex';
+import { Mutex } from "async-mutex";
 
 @Controller("build")
 export class BuildController extends BaseController {
@@ -31,7 +31,11 @@ export class BuildController extends BaseController {
   @Post("/compile")
   async compile(req: Request, res: Response) {
     const projectId = req.body.projectId;
-    if (!projectId || typeof projectId !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(projectId)) {
+    if (
+      !projectId ||
+      typeof projectId !== "string" ||
+      !/^[a-zA-Z0-9_-]+$/.test(projectId)
+    ) {
       res.write(JSON.stringify(formatResponse(1, "项目ID格式不正确")));
       return res.end();
     }
@@ -44,13 +48,18 @@ export class BuildController extends BaseController {
 
     await projectLock.runExclusive(async () => {
       try {
-        const project = await this.projectService.projectDao.findProjectByIdNoReturn(projectId);
+        const project =
+          await this.projectService.projectDao.findProjectByIdNoReturn(
+            projectId
+          );
         if (!project) {
           res.write(JSON.stringify(formatResponse(1, "项目不存在")));
           return res.end();
         }
 
-        const targetPath = path.resolve(await this.compiler.getCompilePathByProject(project));
+        const targetPath = path.resolve(
+          await this.compiler.getCompilePathByProject(project)
+        );
 
         const packageJsonPath = path.join(targetPath, "package.json");
         if (!existsSync(packageJsonPath)) {
@@ -63,15 +72,32 @@ export class BuildController extends BaseController {
         try {
           await this.compiler.compile(targetPath, res);
         } catch (compileError) {
-          res.write(JSON.stringify(formatResponse(1, "编译失败", (compileError as Error).message)));
+          res.write(
+            JSON.stringify(
+              formatResponse(1, "编译失败", (compileError as Error).message)
+            )
+          );
           return res.end();
         }
 
         try {
           const publishResult = await this.compiler.getPublishResult(project);
           await this.projectPublishService.savePublishResult(publishResult);
+          await this.projectService.updatePublishSettings(projectId, {
+            customDomain: '',
+            published: true,
+            publishTime: Date.now(),
+          });
         } catch (publishError) {
-          res.write(JSON.stringify(formatResponse(1, "保存发布结果失败", (publishError as Error).message)));
+          res.write(
+            JSON.stringify(
+              formatResponse(
+                1,
+                "保存发布结果失败",
+                (publishError as Error).message
+              )
+            )
+          );
           return res.end();
         }
 
@@ -79,11 +105,22 @@ export class BuildController extends BaseController {
           await this.compiler.clearCompileDist(project);
           res.write(JSON.stringify(formatResponse(0, "编译和清理成功")));
         } catch (clearError) {
-          res.write(JSON.stringify(formatResponse(1, "清理编译结果失败", (clearError as Error).message)));
+          res.write(
+            JSON.stringify(
+              formatResponse(
+                1,
+                "清理编译结果失败",
+                (clearError as Error).message
+              )
+            )
+          );
         }
-
       } catch (e) {
-        res.write(JSON.stringify(formatResponse(1, "获取项目结构失败", (e as Error).message)));
+        res.write(
+          JSON.stringify(
+            formatResponse(1, "获取项目结构失败", (e as Error).message)
+          )
+        );
       } finally {
         res.end();
       }

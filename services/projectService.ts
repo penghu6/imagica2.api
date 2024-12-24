@@ -70,7 +70,7 @@ class ProjectService {
     return {
       _id: projectId,
       ...param,
-      theme: param.theme || 'system',
+      theme: param.theme || "system",
       paths,
       devVersions: [
         {
@@ -335,9 +335,25 @@ class ProjectService {
       structures,
     });
 
-    const result = await this.projectPublishDao.createProject(project, entryptedObject);
+    const result = await this.projectPublishDao.createProject(
+      project,
+      entryptedObject
+    );
 
     return result;
+  }
+
+  async updatePublishSettings(
+    projectId: string,
+    settings: Partial<IProjectResult["publishSettings"]>
+  ) {
+    const project = await this.projectDao.findProjectByIdNoReturn(projectId);
+    if (!project) {
+      return null;
+    }
+    project.publishSettings = { ...project.publishSettings, ...settings };
+    await project.save();
+    return project;
   }
 }
 

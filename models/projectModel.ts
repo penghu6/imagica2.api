@@ -218,6 +218,10 @@ const projectSchema: Schema = new Schema({
     type: Schema.Types.Mixed,
     default: {}
   },
+  publishSettings: {
+    type: Schema.Types.Mixed,
+    default: {}
+  },
   version: {
     type: Number,
     default: 1

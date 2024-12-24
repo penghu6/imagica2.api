@@ -85,6 +85,12 @@ export interface IProjectResult {
      */
     isPublishDisabled: boolean;
   };
+
+  publishSettings: {
+    customDomain?: string;
+    published?: boolean;
+    publishTime?: number;
+  };
   [key: string]: any;
 }
 

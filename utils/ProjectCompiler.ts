@@ -172,8 +172,12 @@ export class ProjectCompiler {
         if (code === 0) {
           resolve("命令执行完成");
         } else {
-          stream.push(`data: <COMMAND-FAILED>${command}<COMMAND-FAILED>\n\n`);
-          reject(`${command} failed`);
+          let cmd = command
+          if (command.includes('&&')) {
+            cmd = command.split('&&').pop()?.trim() || '';
+          }
+          stream.push(`data: <COMMAND-FAILED>${cmd}<COMMAND-FAILED>\n\n`);
+          reject(`${cmd} failed`);
         }
       });
     });
@@ -200,7 +204,7 @@ export class ProjectCompiler {
       stream.push("data: <COMMAND-END>npm install<COMMAND-END>\n\n");
 
       stream.push("data: <COMMAND-START>npm run build<COMMAND-START>\n\n");
-      await this.execPromise(`cd ${targetPath} && npm run build1`, stream);
+      await this.execPromise(`cd ${targetPath} && npm run build`, stream);
       stream.push("data: <COMMAND-END>npm run build<COMMAND-END>\n\n");
       stream.push("data: Build Successful\n\n");
     } catch (error) {

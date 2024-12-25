@@ -70,7 +70,7 @@ class ProjectService {
     return {
       _id: projectId,
       ...param,
-      theme: param.theme || "system",
+      theme: param.theme || 'light',
       paths,
       devVersions: [
         {

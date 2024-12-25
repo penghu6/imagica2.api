@@ -134,8 +134,8 @@ export class ProjectController extends BaseController {
      *                 description: Project status
      *               theme:
      *                 type: string
-     *                 enum: [system, light, dark]
-     *                 default: system
+     *                 enum: [light, dark]
+     *                 default: light
      *                 description: Project theme preference
      */
     @Post('/create')

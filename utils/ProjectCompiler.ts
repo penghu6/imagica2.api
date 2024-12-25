@@ -214,6 +214,13 @@ async addPublishMsgToChat(targetPath: string, message: string) {
       console.error('添加发布消息失败:', error);
     }
   } 
+  
+  async pushCommand(stream: Readable, command: string, targetPath: string) {
+    stream.push(`data: <COMMAND-START>${command}<COMMAND-START>\n\n`);
+    await this.execPromise(`cd ${targetPath} && ${command}`, stream);
+    stream.push(`data: <COMMAND-END>${command}<COMMAND-END>\n\n`);
+  }
+
   async compile(targetPath: string, res: Response) {
     const stream = new Readable({
       read() {},
@@ -226,28 +233,27 @@ async addPublishMsgToChat(targetPath: string, message: string) {
       stream.push(null); // 结束流
       res.end(); // 结束响应
     }
-    const messageArr: string[] = []
+    const messageArr: string[] = [];
     stream.on('data', (chunk: Buffer) => {
-      messageArr.push(chunk.toString().replace(/^data:/, "").trim())
+      messageArr.push(chunk.toString().replace(/^data:/, '').trim());
     });
     try {
       // stream.push("data: node version:\n\n");
       // await this.execPromise(`cd ${targetPath} && node -v`, stream, true);
+      console.log(new Date().toLocaleString(), "pull dependenices...");
+      await this.pushCommand(stream, "pnpm install", targetPath);
 
-      stream.push("data: <COMMAND-START>npm install<COMMAND-START>\n\n");
-      await this.execPromise(`cd ${targetPath} && npm install`, stream);
-      stream.push("data: <COMMAND-END>npm install<COMMAND-END>\n\n");
+      console.log(new Date().toLocaleString(), "build ...");
+      await this.pushCommand(stream, "pnpm run build", targetPath);
 
-      stream.push("data: <COMMAND-START>npm run build<COMMAND-START>\n\n");
-      await this.execPromise(`cd ${targetPath} && npm run build`, stream);
-      stream.push("data: <COMMAND-END>npm run build<COMMAND-END>\n\n");
       stream.push("data: Build Successful\n\n");
+      console.log(new Date().toLocaleString(), "Build Successful");
     } catch (error) {
-      console.log("\n编译过程中发生错误：" + error);
+      console.log("\n编译过程中发生错误：", error);
       stream.push(`data: Build Failed: ${error}\n\n`);
     } finally {
       over();
-      this.addPublishMsgToChat(targetPath, messageArr.join("\n"))
+      this.addPublishMsgToChat(targetPath, messageArr.join("\n"));
     }
   }
 

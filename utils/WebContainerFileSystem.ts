@@ -18,7 +18,7 @@ export class WebContainerFileSystem {
       if (!await fs.pathExists(developmentPath)) {
         throw new Error('项目目录不存在');
       }
-      console.log("developmentPath", developmentPath);
+
       return await this.getDirectoryStructure(developmentPath);
     } catch (error: any) {
       throw new Error(`获取项目文件失败: ${error.message}`);

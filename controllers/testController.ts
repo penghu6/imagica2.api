@@ -32,6 +32,9 @@ export class TestController extends BaseController {
     const npmVersion = await this.execPromise("npm -v").catch((error) => {
       return "npm -v 获取失败";
     });
+    const pnpmVersion = await this.execPromise("pnpm -v").catch((error) => {
+      return "pnpm -v 获取失败";
+    });
     const dockerVersion = await this.execPromise("docker -v").catch((error) => {
       return "docker -v 获取失败";
     });
@@ -42,6 +45,7 @@ export class TestController extends BaseController {
     return formatResponse(0, "测试成功", {
       nodeVersion,
       npmVersion,
+      pnpmVersion,
       dockerVersion,
       dockerComposeVersion,
     });

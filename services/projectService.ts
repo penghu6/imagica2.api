@@ -199,7 +199,7 @@ class ProjectService {
       if (!project) {
         throw new Error("Project not found");
       }
-      console.log("developmentPath", project);
+
       const developmentPath = project.paths.development;
       return await this.fileSystem.getFileContent(developmentPath, filePath);
     } catch (error: any) {

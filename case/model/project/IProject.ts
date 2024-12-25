@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { IMessageResult } from "../message/IMessage";
 
 // API 响应结果接口，保证前端数据一致性，你也可以将类型发布到npm
-export type ProjectTheme = 'system' | 'light' | 'dark';
+export type ProjectTheme = 'light' | 'dark';
 
 export interface IProjectResult {
   // ===== 项目基础信息 =====

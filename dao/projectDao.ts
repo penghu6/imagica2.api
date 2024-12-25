@@ -211,7 +211,7 @@ class ProjectDao {
       type: project.type,
       status: project.status,
       tags: project.tags,
-      theme: project.theme || 'system',
+      theme: project.theme || 'light',
 
       // ===== 项目代码与对话 =====
       code: (project as any).code,

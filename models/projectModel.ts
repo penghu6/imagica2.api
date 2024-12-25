@@ -224,8 +224,8 @@ const projectSchema: Schema = new Schema({
   },
   theme: {
     type: String,
-    enum: ['system', 'light', 'dark'],
-    default: 'system'
+    enum: ['light', 'dark'],
+    default: 'light'
   }
 }, {
   timestamps: true,  // 自动管理 createdAt 和 updatedAt

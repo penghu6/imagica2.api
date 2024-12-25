@@ -36,6 +36,10 @@ class ProjectPublishDao {
 
     return result;
   }
+
+  async deleteProject(projectId: string) {
+    await EncryptedProjectModel.deleteMany({ projectId: projectId });
+  }
 }
 
 export default ProjectPublishDao;

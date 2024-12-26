@@ -33,7 +33,7 @@ class ProjectDao {
       theme: projectData.theme  // 确保明确设置 theme
     }).save();
     
-    console.log('Created project:', project);
+    // console.log('Created project:', project);
     
     const result = this.convertToProjectResult(project);
     return result;

@@ -24,7 +24,7 @@ class ProjectService {
     this.aiChatService = new AiChatService();
   }
 
-  async handleProjectData(param: IProjectParam) {
+  async handleProjectData(param: IProjectParam, headers: Record<string, any>) {
     const projectId = new mongoose.Types.ObjectId();
     const basePath = process.env.FILE_PATH || "bucket";
 
@@ -61,7 +61,8 @@ class ProjectService {
     if (param.type === "upload") {
       await FileManager.cpProjectCode(param.uploadPath, paths.development);
       runCommand = await this.aiChatService.getRunCommandWithAI(
-        paths.development
+        paths.development,
+        headers
       );
     } else {
       // 使用 FileManager 初始化项目
@@ -89,9 +90,9 @@ class ProjectService {
   /**
    * Create a new project
    */
-  async createProject(param: IProjectParam): Promise<IProjectResult> {
+  async createProject(param: IProjectParam, headers: Record<string, any>): Promise<IProjectResult> {
     try {
-      const projectData = await this.handleProjectData(param);
+      const projectData = await this.handleProjectData(param, headers);
       return await this.projectDao.createProject(projectData);
     } catch (error: any) {
       throw new Error(`Failed to create project: ${error.message}`);

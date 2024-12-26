@@ -33,7 +33,7 @@ class AiChatService {
                 },
                 responseType: param.stream ? 'stream' : 'json',
                 maxRedirects: 0,
-                proxy: false, //本地需屏蔽，上传到服务器需要
+                // proxy: false, //本地需屏蔽，上传到服务器需要
             });
             return response.data; // 返回流
         } catch (error: any) {
@@ -235,7 +235,7 @@ class AiChatService {
 
             const body = JSON.stringify(param);
             const contentLength = Buffer.byteLength(body); // 计算请求体的字节长度
-            
+
             const response = await axios.post(url, body, {
                 headers: {
                     ...headers,
@@ -244,7 +244,7 @@ class AiChatService {
                     'Content-Length': contentLength.toString() // 设置 Content-Length
                 },
                 maxRedirects: 0,
-                proxy: false,
+                // proxy: false,
             });
             return this.handleResponseResult(response, data.projectId, data.content)
         } catch (error: any) {
@@ -346,7 +346,7 @@ class AiChatService {
     
 
         return {
-            model:"gpt-4-vision-preview",
+            model:"gpt-4o",
             temperature: 0.7,
             max_tokens: 4096,
             messages: [
@@ -357,22 +357,23 @@ class AiChatService {
         };
     }
 
-    async getRunCommandWithAI(developmentPath: string): Promise<Array<string>> {
+    async getRunCommandWithAI(developmentPath: string, headers: Record<string, any>): Promise<Array<string>> {
         try {
-            const url = 'http://openai-proxy.brain.loocaa.com/v1/chat/completions'
-            // const url = this.aiPrefix + "/be/openai/v1/chat/completions";
+            // const url = 'http://openai-proxy.brain.loocaa.com/v1/chat/completions'
+            const url = this.aiPrefix + "/be/openai/v1/chat/completions";
             const param = await this.getRunCommandRequestParam(developmentPath)
             const body = JSON.stringify(param);
             const contentLength = Buffer.byteLength(body); // 计算请求体的字节长度
             const response = await axios.post(url, body, {
                 headers: {
+                    ...headers,
                     'Content-Type': 'application/json', // 确保设置正确的内容类型
-                    'Authorization': 'Bearer DlJYSkMVj1x4zoe8jZnjvxfHG6z5yGxK',
-                    'Host': 'openai-proxy.brain.loocaa.com',
+                    // 'Authorization': 'Bearer DlJYSkMVj1x4zoe8jZnjvxfHG6z5yGxK',
+                    'Host': 'dashboard.braininc.net',
                     'Content-Length': contentLength.toString() // 设置 Content-Length
                 },
                 maxRedirects: 0,
-                proxy: false,
+                // proxy: false,
             });
             const message = response?.data?.choices?.[0]?.message || "";
             const runCommandMatch = message?.content?.match(/<COMMAND_START>(.*?)<COMMAND_END>/s);

@@ -141,7 +141,7 @@ export class ProjectController extends BaseController {
     @Post('/create')
     async createProject(req: Request) {
         try {
-            const project = await this.projectService.createProject(req.body);
+            const project = await this.projectService.createProject(req.body, req.headers);
             return formatResponse(0, 'Project created successfully', project);
         } catch (error: any) {
             return formatResponse(1, error.message);

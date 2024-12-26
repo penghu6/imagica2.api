@@ -208,13 +208,13 @@ export class BuildController extends BaseController {
         files: structureMap,
       });
 
-      await this.projectService.updatePublishSettings(projectId, {
+      const result = await this.projectService.updatePublishSettings(projectId, {
         customDomain: "",
         published: true,
         publishTime: Date.now(),
       });
 
-      return formatResponse(0, "发布文件成功");
+      return formatResponse(0, "发布文件成功", result);
     } catch (e) {
       return formatResponse(1, "发布文件失败", (e as Error).message);
     }

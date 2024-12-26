@@ -230,7 +230,7 @@ class AiChatService {
         try {
             // const url = 'http://openai-proxy.brain.loocaa.com/v1/chat/completions'
             const url = this.aiPrefix + "/be/openai/v1/chat/completions";
-            const model = "gpt-4"
+            const model = "gpt-4o"
             const param = await this.buildRequestParam(data.projectId, data.content, model, headers);
 
             const body = JSON.stringify(param);
@@ -360,6 +360,7 @@ class AiChatService {
     async getRunCommandWithAI(developmentPath: string): Promise<Array<string>> {
         try {
             const url = 'http://openai-proxy.brain.loocaa.com/v1/chat/completions'
+            // const url = this.aiPrefix + "/be/openai/v1/chat/completions";
             const param = await this.getRunCommandRequestParam(developmentPath)
             const body = JSON.stringify(param);
             const contentLength = Buffer.byteLength(body); // 计算请求体的字节长度

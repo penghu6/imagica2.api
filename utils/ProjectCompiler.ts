@@ -279,6 +279,7 @@ async addPublishMsgToChat(targetPath: string, message: string) {
   }
 
   async getPublishResult(project: IProject): Promise<PublishResult> {
+    // sandpack 预览结构，需要使用 / 作为分隔符
     const structureMap = await this.getCompileStructureMap(project, {
       withRoot: true,
       sep: "/",

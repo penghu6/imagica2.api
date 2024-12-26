@@ -6,9 +6,13 @@ import { BaseController } from "./baseController";
 import { bucket } from "../config/storage";
 import path from "path";
 import { existsSync } from "fs-extra";
-import { ProjectCompiler } from "../utils/ProjectCompiler";
+import {
+  ProjectCompiler,
+  ProjectStructureMapUtil,
+} from "../utils/ProjectCompiler";
 import ProjectPublishService from "../services/projectPublishService";
 import { Mutex } from "async-mutex";
+import { FileStructure } from "../models/file";
 
 @Controller("build")
 export class BuildController extends BaseController {
@@ -171,6 +175,48 @@ export class BuildController extends BaseController {
       return formatResponse(0, "取消发布成功");
     } catch (e) {
       return formatResponse(1, "取消发布成功", (e as Error).message);
+    }
+  }
+
+  @Post("/publish-files/:projectId")
+  async publishFiles(req: Request, res: Response) {
+    const projectId = req.params.projectId as string;
+    if (!projectId) {
+      return formatResponse(1, "项目ID不能为空");
+    }
+
+    const files = req.body.files as FileStructure[];
+    if (!files || !Array.isArray(files)) {
+      return formatResponse(1, "文件不能为空");
+    }
+
+    const project =
+      await this.projectService.projectDao.findProjectByIdNoReturn(projectId);
+    if (!project) {
+      return formatResponse(1, "项目不存在");
+    }
+
+    // 将文件结构转换为结构映射， sandpack 预览结构需要使用 / 作为分隔符
+    const structureMap = ProjectStructureMapUtil.structureToMap(files, {
+      withRoot: true,
+      sep: "/",
+    });
+
+    try {
+      await this.projectPublishService.savePublishResult({
+        project,
+        files: structureMap,
+      });
+
+      await this.projectService.updatePublishSettings(projectId, {
+        customDomain: "",
+        published: true,
+        publishTime: Date.now(),
+      });
+
+      return formatResponse(0, "发布文件成功");
+    } catch (e) {
+      return formatResponse(1, "发布文件失败", (e as Error).message);
     }
   }
 }

@@ -38,15 +38,7 @@ class AiChatService {
             }
             return param.stream ? response.body as unknown as Readable : response.body as unknown as IAiChatResult; // 返回 JSON 数据
         } catch (error: any) {
-            console.error('错误详情:', {
-                message: error.message,
-                status: error.response?.status,
-                statusText: error.response?.statusText,
-                data: error.response?.data,
-                headers: error.response?.headers,
-                url: error.config?.url,
-                method: error.config?.method
-            });
+            console.error('错误详情:', error);
             throw new Error(`发送消息失败: ${error.message}`);
         }
     }
@@ -255,7 +247,7 @@ class AiChatService {
             }
             return this.handleResponseResult(await response.json(), data.projectId, data.content)
         } catch (error: any) {
-            console.error('错误详情:',  error.message);
+            console.error('错误详情:',  error.message, error);
             throw new Error(`发送消息失败: ${error.message}`);
         }
     }
@@ -328,7 +320,7 @@ class AiChatService {
     private async getRunCommandRequestParam(pdevelopmentPath: string): Promise<IAiChatParam> {
         const assistantChat = {
             role: "assistant" as "assistant",
-            content: `根据整个项目的代码，给出运行该项目的命令，使用json字符串的格式返回，key值为runCommand， value为包含命令字符串的数组。比如
+            content: `根据package.json的代码，给出运行该项目的命令，使用json字符串的格式返回，key值为runCommand， value为包含命令字符串的数组。比如
             '''
             <COMMAND_START>{"runCommand":["xxx"]}<COMMAND_END>
             '''
@@ -340,17 +332,16 @@ class AiChatService {
     
         // 获取代码文件映射
         const codes = await this.getFileContent(pdevelopmentPath)
+        const packageFile = codes.find(file => /package\.json$/.test(file.path))
+        let userContent = ""
+        if(packageFile){
+            userContent = `package.json \nCode:\n${packageFile.content}`;
+        }
+
         const userChat = {
             role: "user" as "user",
-            content: codes.map(file => {
-                const ignorFile = [/package\-lock/, /node_modules/, /\.git/, /dockerfile/i, /\.jpg/, /\.jpeg/, /\.png/, /\.gif/, /\.ico/, /\.svg/, /build\//];
-                if (file.path && !ignorFile.some(pattern => pattern.test(file.path))) {
-                    return `@Codebase\nPath: ${file.path}\nCode:\n${file.content}`;
-                }
-                return '';
-            }).filter(Boolean).join('\n\n')
+            content: userContent
         };
-    
 
         return {
             model:"gpt-4o",
@@ -369,20 +360,33 @@ class AiChatService {
             // const url = 'http://openai-proxy.brain.loocaa.com/v1/chat/completions'
             const url = this.aiPrefix + "/be/openai/v1/chat/completions";
             const param = await this.getRunCommandRequestParam(developmentPath)
+            //如果没有package.json, 运行命令为空
+            const userChat = param.messages.find(x => x.role === "user")
+            if(!userChat?.content){
+                return []
+            }
             const body = JSON.stringify(param);
             const contentLength = Buffer.byteLength(body); // 计算请求体的字节长度
-            const response = await axios.post(url, body, {
+
+            const response = await fetch(url, {
+                method: 'POST',
                 headers: {
-                    ...headers,
-                    'Content-Type': 'application/json', // 确保设置正确的内容类型
-                    // 'Authorization': 'Bearer DlJYSkMVj1x4zoe8jZnjvxfHG6z5yGxK',
-                    'Host': 'dashboard.braininc.net',
-                    'Content-Length': contentLength.toString() // 设置 Content-Length
+                    // ...headers,
+                    'Authorization': headers.Authorization || headers.authorization,
+                    "Content-Type": "application/json",
+                    "Connection": "keep-alive",
+                    'host': 'dashboard.braininc.net',
+                    'Content-Length': contentLength.toString()
                 },
-                maxRedirects: 0,
-                // proxy: false,
+                body,
             });
-            const message = response?.data?.choices?.[0]?.message || "";
+    
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json() as unknown as IAiChatResult
+
+            const message = data?.choices?.[0]?.message || "";
             const runCommandMatch = message?.content?.match(/<COMMAND_START>(.*?)<COMMAND_END>/s);
             if (runCommandMatch && runCommandMatch[1]) {
                 const runCommandJson = JSON.parse(runCommandMatch[1]) || {};

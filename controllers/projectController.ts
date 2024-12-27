@@ -429,9 +429,9 @@ export class ProjectController extends BaseController {
         try {
             const { userId, projectId } = req.params;
             const structure = await this.projectService.getProjectStructure(userId, projectId);
-            res.json(formatResponse(0, '获取成功', structure));
+            return formatResponse(0, '获取成功', structure);
         } catch (error: any) {
-            res.status(500).json(formatResponse(-1, '获取项目结构失败', { error: error.message }));
+            return formatResponse(1, '获取项目结构失败', { error: error.message });
         }
     }
 
@@ -484,9 +484,9 @@ export class ProjectController extends BaseController {
                 filePath as string
             );
             
-            res.json(formatResponse(0, '获取成功', { content }));
+            return formatResponse(0, '获取成功', { content });
         } catch (error: any) {
-            res.status(500).json(formatResponse(-1, '获取文件内容失败', { error: error.message }));
+            return formatResponse(1, '获取文件内容失败', { error: error.message });
         }
     }
 
@@ -546,7 +546,7 @@ export class ProjectController extends BaseController {
             await this.projectService.updateProjectFiles(projectId, data);
             return formatResponse(0, 'Project files updated successfully');
         } catch (error: any) {
-            return res.status(500).json(formatResponse(-1, error.message));
+            return formatResponse(1, error.message);
         }
     }
 

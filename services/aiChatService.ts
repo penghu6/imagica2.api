@@ -154,8 +154,8 @@ class AiChatService {
     }
     
     private async handleResponseResult(response: any, projectId: string, userContent: string): Promise<IAiChatResult | Readable> {
-        const newMessage = response.data?.choices?.[0]?.message;
-        const messageId = response.data?.id || uuidv4();
+        const newMessage = response.choices?.[0]?.message;
+        const messageId = response.id || uuidv4();
         
         let newHandleChat: IMessageResult = {
             messageId,
@@ -163,7 +163,7 @@ class AiChatService {
             role: newMessage?.role || "assistant",
             content: newMessage?.content || "",
             type: MessageType["handledContent"],
-            createdAt: response.data.created * 1000,
+            createdAt: response.created * 1000,
         };
     
         if (newMessage) {
@@ -195,7 +195,7 @@ class AiChatService {
                 role: newMessage.role,
                 content: newMessage.content,
                 type: MessageType["originContent"],
-                createdAt: response.data.created * 1000
+                createdAt: response.created * 1000
             };
     
             newHandleChat = {
@@ -204,7 +204,7 @@ class AiChatService {
                 role: newMessage.role,
                 content: handledContent,
                 type: MessageType["handledContent"],
-                createdAt: response.data.created * 1000,
+                createdAt: response.created * 1000,
                 metadata: {
                     needUpdateFiles
                 }
@@ -214,10 +214,10 @@ class AiChatService {
         }
     
         return {
-            ...response.data,
+            ...response,
             choices: [
                 {
-                    ...response.data?.choices?.[0] || {},
+                    ...response?.choices?.[0] || {},
                     message: {
                         role: newMessage.role,
                         content: newHandleChat.content || "",
@@ -237,19 +237,25 @@ class AiChatService {
             const body = JSON.stringify(param);
             const contentLength = Buffer.byteLength(body); // 计算请求体的字节长度
 
-            const response = await axios.post(url, body, {
+            const response = await fetch(url, {
+                method: 'POST',
                 headers: {
-                    ...headers,
-                    // 'Authorization': 'Bearer DlJYSkMVj1x4zoe8jZnjvxfHG6z5yGxK',
-                    'Host': 'dashboard.braininc.net',
-                    'Content-Length': contentLength.toString() // 设置 Content-Length
+                    // ...headers,
+                    'Authorization': headers.Authorization || headers.authorization,
+                    "Content-Type": "application/json",
+                    "Connection": "keep-alive",
+                    'host': 'dashboard.braininc.net',
+                    'Content-Length': contentLength.toString()
                 },
-                maxRedirects: 0,
-                // proxy: false,
+                body,
             });
-            return this.handleResponseResult(response, data.projectId, data.content)
+    
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return this.handleResponseResult(await response.json(), data.projectId, data.content)
         } catch (error: any) {
-            console.error('错误详情:',  error.response.data.error);
+            console.error('错误详情:',  error.message);
             throw new Error(`发送消息失败: ${error.message}`);
         }
     }

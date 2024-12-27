@@ -78,33 +78,38 @@ export class AiChatController extends BaseController{
     async sendMessage(req: Request, res: Response) {
         try {
             const headers = req.headers; // 获取请求头
-            const response = await this.aiChatService.sendMessage(req.body, headers); // 传递参数和请求头
-
+            const stream = await this.aiChatService.sendMessage(req.body, headers); // 传递参数和请求头
             // 检查返回类型
-            if (response instanceof Readable) {
+            if (stream instanceof ReadableStream) {
                 // 如果是流，直接将流管道到响应
                 res.setHeader('Content-Type', 'text/event-stream');
                 res.setHeader('Cache-Control', 'no-cache');
                 res.setHeader('Connection', 'keep-alive');
 
-                response.pipe(res);
+                // 将 ReadableStream 管道到响应
+                const reader = stream.getReader();
                 // 创建一个 Promise 来处理流的结束和错误
                 await new Promise((resolve, reject) => {
-                    response.on('end', () => {
-                        console.log('Stream ended');
-                        res.end(); // 结束响应
-                        resolve("end"); // 解决 Promise
-                    });
-
-                    response.on('error', (err) => {
-                        console.error('Stream error:', err);
-                        res.status(500).end(); // 处理流错误
-                        reject(err); // 拒绝 Promise
-                    });
+                    try {
+                        const push = async () => {
+                            const { done, value } = await reader.read();
+                            if (done) {
+                                res.end(); // 结束响应
+                                resolve("end");
+                                return;
+                            }
+                            res.write(value); // 将数据写入响应
+                            push(); // 继续读取
+                        };
+                        push(); // 开始读取
+                    } catch (error) {
+                        reject(error)
+                    }
+                    
                 });
             } else {
                 // 否则返回 JSON 响应
-                return formatResponse(0, '消息发送成功', response);
+                return formatResponse(0, '消息发送成功', res);
             }
         } catch (error: any) {
             return formatResponse(1, error.message);

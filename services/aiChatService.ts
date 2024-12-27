@@ -24,18 +24,19 @@ class AiChatService {
         try {
             // const url = 'http://openai-proxy.brain.loocaa.com/v1/chat/completions'
             const url = this.aiPrefix + "/be/openai/v1/chat/completions";
-
-            const response = await axios.post(url, param, {
+            const response = await fetch(url, {
+                method: 'POST',
                 headers: {
                     ...headers,
-                    // 'Authorization': 'Bearer DlJYSkMVj1x4zoe8jZnjvxfHG6z5yGxK',
-                    'host': 'dashboard.braininc.net',
+                    'host': 'dashboard.braininc.net'
                 },
-                responseType: param.stream ? 'stream' : 'json',
-                maxRedirects: 0,
-                // proxy: false, //本地需屏蔽，上传到服务器需要
+                body: JSON.stringify(param),
             });
-            return response.data; // 返回流
+    
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return param.stream ? response.body as unknown as Readable : response.body as unknown as IAiChatResult; // 返回 JSON 数据
         } catch (error: any) {
             console.error('错误详情:', {
                 message: error.message,

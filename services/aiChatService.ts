@@ -24,11 +24,16 @@ class AiChatService {
         try {
             // const url = 'http://openai-proxy.brain.loocaa.com/v1/chat/completions'
             const url = this.aiPrefix + "/be/openai/v1/chat/completions";
+            console.log(444, headers)
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
-                    ...headers,
-                    'host': 'dashboard.braininc.net'
+                    // ...headers,
+                    'Authorization': headers.Authorization || headers.authorization,
+                    "Content-Type": "application/json",
+                    "Connection": "keep-alive",
+                    'host': 'dashboard.braininc.net',
+                    'content-length': headers["content-length"]
                 },
                 body: JSON.stringify(param),
             });

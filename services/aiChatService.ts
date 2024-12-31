@@ -105,8 +105,28 @@ class AiChatService {
     private async buildRequestParam(projectId: string, userContent: string, model: string, headers: any): Promise<IAiChatParam> {
         const assistantChat = {
             role: "assistant",
-            content: "对于用户的修改，请将代码文件的内容放入一个 JSON 数组中，每个元素包含 'path' 、 'content'和'type'，path为文件路径，content为该文件完整的内容, 'type'值为'add'、'update'、'delete',文件为新增使用'add', 文件为修改使用'update', 文件需要删除使用'delete'。文件JSON数组使用<CODE_START>和<CODE_END>作为开始和结束标签。代码内容后面加上当前的修改文本描述"
-        };
+            // content: "对于用户的需求，使用当前的项目进行修改。对于用户的修改，请将代码文件的内容放入一个 JSON 数组中，每个元素包含 'path' 、 'content'和'type'，path为文件路径，content为该文件完整的内容, 'type'值为'add'、'update'、'delete',文件为新增使用'add', 文件为修改使用'update', 文件需要删除使用'delete'。文件JSON数组使用<CODE_START>和<CODE_END>作为开始和结束标签。代码内容后面加上当前的修改文本描述"
+            content: `
+                对于用户的需求，使用当前的项目进行修改。对于用户的修改，请将代码文件的内容放入一个 JSON 数组中，每个元素包含以下字段：
+
+                path：文件路径。
+
+                content：该文件的完整内容。
+
+                type：文件操作类型，可以为 'add'、'update' 或 'delete'。
+
+                如果是新增文件，type 为 'add'。
+
+                如果是修改文件，type 为 'update'。
+
+                如果是删除文件，type 为 'delete'。
+
+
+                请使用 <CODE_START> 和 <CODE_END> 标签将 JSON 数组包裹起来，并确保代码后附上修改的简要描述。
+                每次修改不要破坏已有的功能
+
+                示例： 用户输入“页面上没看到2048的格子”，请根据上下文判断并返回相应修改的代码文件，并附上修改描述。`
+            };
     
         // 获取代码文件映射
         const codes = await this.getFileMapping(projectId);
